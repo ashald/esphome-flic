@@ -23,6 +23,8 @@ protocol all run on the ESP.
   slots.
 - Keep the board a few metres from Wi-Fi access points and other 2.4 GHz transmitters. A hub
   sitting next to an AP saw roughly 100 times more link drops than identical hubs elsewhere.
+- Tested with ESPHome 2026.9.0 on Adafruit Feather ESP32 V2 hubs, classic ESP32 with six devices
+  each, and a Seeed XIAO ESP32S3. Device firmware: Flic Twist 2, Flic 2 11, Flic Duo 15.
 
 ## Quick start
 
