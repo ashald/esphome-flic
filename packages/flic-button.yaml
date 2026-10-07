@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Borys Pierov
+#
+# One Flic 2 on a flic_twist hub. Include it once per button:
+#
+#   packages:
+#     door: !include
+#       file: packages/flic-button.yaml
+#       vars: {fb_id: door, fb_name: "Front Door"}    # fb_mac: optional, learned when pairing
+#
+# The button appears in Home Assistant as its own device, "<fb_name> Flic Button", under the hub,
+# with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Connected, Type,
+# Status, Firmware, Name, MAC, and the Pair, Dump creds and Unpair buttons (the last two hidden by
+# default). Pair it with the Pair button; the credentials are kept in the hub's flash.
+
+substitutions:
+  fb_mac: "00:00:00:00:00:00"
+
+esphome:
+  devices:
+    - id: ${fb_id}_dev
+      name: "${fb_name} Flic Button"
+
+ble_client:
+  - id: ${fb_id}_ble
+    mac_address: ${fb_mac}
+
+flic_twist:
+  - id: ${fb_id}
+    device_type: button
+    ble_client_id: ${fb_id}_ble
+
+event:
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    device_id: ${fb_id}_dev
+    name: "Events"
+
+sensor:
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    battery_level:
+      name: "Battery"
+      device_id: ${fb_id}_dev
+    battery_voltage:
+      name: "Battery voltage"
+      device_id: ${fb_id}_dev
+    rssi:
+      name: "RSSI"
+      device_id: ${fb_id}_dev
+
+button:
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    type: pair
+    device_id: ${fb_id}_dev
+    name: "Pair"
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    type: dump_creds
+    device_id: ${fb_id}_dev
+    name: "Dump creds"
+    disabled_by_default: true
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    type: unpair
+    device_id: ${fb_id}_dev
+    name: "Unpair"
+    disabled_by_default: true
+
+binary_sensor:
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    connected:
+      name: "Connected"
+      device_id: ${fb_id}_dev
+
+text_sensor:
+  - platform: flic_twist
+    flic_twist_id: ${fb_id}
+    type:
+      name: "Type"
+      device_id: ${fb_id}_dev
+    status:
+      name: "Status"  # not paired / disconnected / connected
+      device_id: ${fb_id}_dev
+    firmware_version:
+      name: "Firmware"
+      device_id: ${fb_id}_dev
+    device_name:
+      name: "Name"
+      device_id: ${fb_id}_dev
+    mac:
+      name: "MAC"
+      device_id: ${fb_id}_dev

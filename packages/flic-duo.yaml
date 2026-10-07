@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Borys Pierov
+#
+# One Flic Duo on a flic_twist hub. Include it once per Duo:
+#
+#   packages:
+#     desk: !include
+#       file: packages/flic-duo.yaml
+#       vars: {fd_id: desk, fd_name: "Desk"}    # fd_mac: optional, learned when pairing
+#
+# The Duo appears in Home Assistant as its own device, "<fd_name> Flic Duo", under the hub, with:
+# Big button and Small button events (click, double_click, hold, four swipes, push-twist
+# rotation), Big dial and Small dial numbers (0-100 %, turned by holding the button and twisting
+# the Duo), Battery, Battery voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the
+# Pair, Dump creds and Unpair buttons (the last two hidden by default). Pair it with the Pair
+# button, then hold the Duo's big button for about 7 s until it flashes.
+
+substitutions:
+  fd_mac: "00:00:00:00:00:00"
+
+esphome:
+  devices:
+    - id: ${fd_id}_dev
+      name: "${fd_name} Flic Duo"
+
+ble_client:
+  - id: ${fd_id}_ble
+    mac_address: ${fd_mac}
+
+flic_twist:
+  - id: ${fd_id}
+    device_type: duo
+    ble_client_id: ${fd_id}_ble
+
+event:
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    duo_button: big
+    device_id: ${fd_id}_dev
+    name: "Big button"
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    duo_button: small
+    device_id: ${fd_id}_dev
+    name: "Small button"
+
+number:
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    duo_button: big
+    device_id: ${fd_id}_dev
+    name: "Big dial"
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    duo_button: small
+    device_id: ${fd_id}_dev
+    name: "Small dial"
+
+sensor:
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    battery_level:
+      name: "Battery"
+      device_id: ${fd_id}_dev
+    battery_voltage:
+      name: "Battery voltage"
+      device_id: ${fd_id}_dev
+    rssi:
+      name: "RSSI"
+      device_id: ${fd_id}_dev
+
+button:
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    type: pair
+    device_id: ${fd_id}_dev
+    name: "Pair"
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    type: dump_creds
+    device_id: ${fd_id}_dev
+    name: "Dump creds"
+    disabled_by_default: true
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    type: unpair
+    device_id: ${fd_id}_dev
+    name: "Unpair"
+    disabled_by_default: true
+
+binary_sensor:
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    connected:
+      name: "Connected"
+      device_id: ${fd_id}_dev
+
+text_sensor:
+  - platform: flic_twist
+    flic_twist_id: ${fd_id}
+    type:
+      name: "Type"
+      device_id: ${fd_id}_dev
+    status:
+      name: "Status"  # not paired / disconnected / connected
+      device_id: ${fd_id}_dev
+    firmware_version:
+      name: "Firmware"
+      device_id: ${fd_id}_dev
+    device_name:
+      name: "Name"
+      device_id: ${fd_id}_dev
+    mac:
+      name: "MAC"
+      device_id: ${fd_id}_dev

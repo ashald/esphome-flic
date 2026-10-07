@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.esphome/
+secrets.yaml
+tests/flic_twist/vectors.txt

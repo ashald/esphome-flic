@@ -1,0 +1,22 @@
+esphome-flic: the flic_twist ESPHome component for Flic Twist, Flic 2 and Flic Duo
+Copyright 2026 Borys Pierov
+
+Licensed under the Apache License, Version 2.0 (see LICENSE). This covers
+everything in this repository: the component (components/flic_twist), the
+device packages (packages/) and the host tests (tests/flic_twist).
+
+This product includes software derived from pyflic-ble
+(https://github.com/50ButtonsEach/pyflic-ble), Copyright Shortcut Labs,
+licensed under the Apache License, Version 2.0. Files containing such code say
+so in their headers; that code was ported from Python to C++ and modified.
+
+This product includes TweetNaCl (https://tweetnacl.cr.yp.to/) by Daniel J.
+Bernstein, Bernard van Gastel, Wesley Janssen, Tanja Lange, Peter Schwabe and
+Sjaak Smetsers, which is in the public domain. tweetnacl.c and tweetnacl.h are
+the unmodified 20140427 release.
+
+The Flic 2 and Flic Duo support follows Shortcut Labs' published protocol
+specifications (https://github.com/50ButtonsEach/flic2-documentation/wiki).
+
+Flic, Flic 2, Flic Twist and Flic Duo are trademarks of Shortcut Labs AB. This
+project is not affiliated with, endorsed by or sponsored by Shortcut Labs.
