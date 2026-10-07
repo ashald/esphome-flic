@@ -529,14 +529,17 @@ slots on the node, those with credentials, and those with a session up. They are
 - Events a device queued while it was disconnected are not replayed as live events, so a
   reconnect never triggers old presses. Flic 2 and Duo still acknowledge them, which clears
   the device's queue.
-- Duo swipes: a press released with a recognised gesture fires `swipe_<direction>` instead of
-  `click`.
-- Duo push-twist: hold a button and turn the Duo. Once it has turned one step (1 % of
-  `dial_range`) the dial follows, and a rotate event fires for each notification in which the
-  rotation crossed a step. Smaller wobbles during a press are ignored. A press that turned the
-  Duo fires no `click`, `double_click` or `hold`, for every button held. Start turning within
-  about 1 s of pressing, since `hold` fires at 1 s. Turning while holding both buttons moves the
-  big button's dial.
+- Duo swipes: press a button, then jerk the whole Duo in a direction while sliding your thumb
+  that way, and let go. It takes some practice. A press released with a recognised gesture fires
+  `swipe_<direction>` instead of `click`. A gesture the Duo noticed but couldn't classify fires
+  nothing, so a failed swipe doesn't count as a click.
+- Duo push-twist: hold a button and turn the Duo. Turning counts once the button has been held
+  half a second and the Duo has turned 10°; the dial then follows the rotation beyond that, and a
+  rotate event fires for each notification in which the rotation crossed a 1 % step. This keeps
+  the wobble of a hold, a slow click or a swipe from counting as a twist. A press that turned the
+  Duo fires no `click`, `double_click` or `hold`, for every button held, except that a swipe
+  released within a second still fires. Start turning within about 1 s of pressing, since `hold`
+  fires at 1 s. Turning while holding both buttons moves the big button's dial.
 - A double click whose presses were not both plain clicks fires what they were. A click followed
   quickly by a swipe fires `click` and the swipe, not `double_click`.
 - A Duo's rotate events keep firing past either end of its dial, so they also work for relative
