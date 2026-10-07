@@ -52,7 +52,7 @@
 #include <vector>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 namespace espbt = esphome::esp32_ble_tracker;
 
@@ -131,7 +131,7 @@ class FlicClientBase : public ble_client::BLEClientNode,
   // (diagnostic, disabled-by-default) "unpair" button.
   void unpair();
 
-  // Generic 0-100 % position, used by FlicPositionNumber and the flic_twist.set_position action.
+  // Generic 0-100 % position, used by FlicPositionNumber and the flic.set_position action.
   // `selector` is device-specific: Twist = selector mode 0-12 (-1 = the mode it is in now, the
   // LED ring follows); Duo = dial of button 0 (big) / 1 (small) (-1 = big). Returns true when the
   // value is in effect now (a Twist write is deferred while disconnected). Devices without a
@@ -361,7 +361,7 @@ class FlicPositionNumber : public number::Number, public Parented<FlicClientBase
   int selector_{-1};
 };
 
-// Automation action flic_twist.set_position { id, position: 0-100, twist_mode: 0-12 | duo_button }.
+// Automation action flic.set_position { id, position: 0-100, twist_mode: 0-12 | duo_button }.
 template<typename... Ts> class SetPositionAction : public Action<Ts...>, public Parented<FlicClientBase> {
  public:
   TEMPLATABLE_VALUE(float, position)
@@ -373,7 +373,7 @@ template<typename... Ts> class SetPositionAction : public Action<Ts...>, public 
   }
 };
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

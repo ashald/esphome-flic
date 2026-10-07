@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Borys Pierov
-"""Sensors for the flic_twist component.
+"""Sensors for the flic component.
 
-Per device (need `flic_twist_id`):
+Per device (need `flic_id`):
   battery_voltage  measured cell voltage (Twist: 2xAAA millivolts; Flic 2 / Duo: CR2032, 10-bit ADC,
                    3.6 V ref),
                    polled hourly over the authenticated session,
@@ -11,7 +11,7 @@ Per device (need `flic_twist_id`):
   mode             (Twist only) the selector mode the knob is in, 0-11 = selector slots, 12 =
                    push-twist; learned from the first event after boot.
 
-Node level (no `flic_twist_id`; one set per hub, from the FlicFleet summary):
+Node level (no `flic_id`; one set per hub, from the FlicFleet summary):
   slots      Flic slots configured on this node,
   paired     slots holding pairing credentials,
   connected  slots with an authenticated session up.
@@ -32,7 +32,7 @@ from esphome.const import (
     UNIT_VOLT,
 )
 
-from . import CONF_FLIC_TWIST_ID, DEVICE_TWIST, FlicClientBase, device_type_of
+from . import CONF_FLIC_ID, DEVICE_TWIST, FlicClientBase, device_type_of
 
 CONF_BATTERY_VOLTAGE = "battery_voltage"
 CONF_BATTERY_LEVEL = "battery_level"
@@ -46,9 +46,9 @@ _PER_DEVICE = (CONF_BATTERY_VOLTAGE, CONF_BATTERY_LEVEL, CONF_RSSI, CONF_MODE)
 
 
 def _per_device_needs_id(config):
-    if any(k in config for k in _PER_DEVICE) and CONF_FLIC_TWIST_ID not in config:
+    if any(k in config for k in _PER_DEVICE) and CONF_FLIC_ID not in config:
         raise cv.Invalid(
-            "battery_voltage / battery_level / rssi / mode are per-device sensors and need flic_twist_id"
+            "battery_voltage / battery_level / rssi / mode are per-device sensors and need flic_id"
         )
     return config
 
@@ -56,7 +56,7 @@ def _per_device_needs_id(config):
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
-            cv.Optional(CONF_FLIC_TWIST_ID): cv.use_id(FlicClientBase),
+            cv.Optional(CONF_FLIC_ID): cv.use_id(FlicClientBase),
             cv.Optional(CONF_BATTERY_VOLTAGE): sensor.sensor_schema(
                 unit_of_measurement=UNIT_VOLT,
                 device_class=DEVICE_CLASS_VOLTAGE,
@@ -106,7 +106,7 @@ CONFIG_SCHEMA = cv.All(
 
 
 def _final_validate(config):
-    if CONF_MODE in config and device_type_of(config[CONF_FLIC_TWIST_ID]) != DEVICE_TWIST:
+    if CONF_MODE in config and device_type_of(config[CONF_FLIC_ID]) != DEVICE_TWIST:
         raise cv.Invalid("mode is a Twist sensor (the selector mode the knob is in)")
     return config
 
@@ -115,8 +115,8 @@ FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):
-    if CONF_FLIC_TWIST_ID in config:
-        hub = await cg.get_variable(config[CONF_FLIC_TWIST_ID])
+    if CONF_FLIC_ID in config:
+        hub = await cg.get_variable(config[CONF_FLIC_ID])
         if CONF_BATTERY_VOLTAGE in config:
             cg.add(hub.set_battery_voltage_sensor(await sensor.new_sensor(config[CONF_BATTERY_VOLTAGE])))
         if CONF_BATTERY_LEVEL in config:
@@ -132,4 +132,4 @@ async def to_code(config):
     ):
         if key in config:
             s = await sensor.new_sensor(config[key])
-            cg.add(cg.RawExpression(f"flic_twist::FlicFleet::get()->{setter}({s})"))
+            cg.add(cg.RawExpression(f"flic::FlicFleet::get()->{setter}({s})"))

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Borys Pierov
 #
-# One Flic Twist on a flic_twist hub. Include it once per Twist:
+# One Flic Twist on an ESPHome Flic hub. Include it once per Twist:
 #
 #   packages:
 #     hall: !include
@@ -27,26 +27,26 @@ ble_client:
   - id: ${tw_id}_ble
     mac_address: ${tw_mac}
 
-flic_twist:
+flic:
   - id: ${tw_id}
     ble_client_id: ${tw_id}_ble
     push_twist_mode: selector
 
 number:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     device_id: ${tw_id}_dev
     name: "Position"
 
 event:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     device_id: ${tw_id}_dev
     name: "Events"
 
 sensor:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     mode:
       name: "Mode"
       device_id: ${tw_id}_dev
@@ -61,38 +61,38 @@ sensor:
       device_id: ${tw_id}_dev
 
 button:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type: pair
     device_id: ${tw_id}_dev
     name: "Pair"
   # One-shot creds export to migrate this Twist to a new board WITHOUT re-pairing (logs the bond
   # secret to the ESP log) — hidden by default; enable it in HA only when migrating.
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type: dump_creds
     device_id: ${tw_id}_dev
     name: "Dump creds"
     disabled_by_default: true
   # Wipe stored creds to free this slot for re-pairing (e.g. move to another hub) — destructive,
   # so hidden by default; enable it in HA only when intentionally unpairing.
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type: unpair
     device_id: ${tw_id}_dev
     name: "Unpair"
     disabled_by_default: true
 
 binary_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     connected:
       name: "Connected"
       device_id: ${tw_id}_dev
 
 text_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type:
       name: "Type"
       device_id: ${tw_id}_dev

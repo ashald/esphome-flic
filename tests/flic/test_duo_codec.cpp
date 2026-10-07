@@ -8,7 +8,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-using namespace esphome::flic_twist;
+using namespace esphome::flic;
 
 int main(int argc, char **argv) {
   FILE *f = fopen(argc > 1 ? argv[1] : "vectors.txt", "r");

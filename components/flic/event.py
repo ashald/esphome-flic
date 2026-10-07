@@ -19,7 +19,7 @@ from esphome.components import event
 
 from . import (
     CONF_DUO_BUTTON,
-    CONF_FLIC_TWIST_ID,
+    CONF_FLIC_ID,
     DEVICE_BUTTON,
     DEVICE_DUO,
     DEVICE_TWIST,
@@ -54,7 +54,7 @@ EVENT_TYPES = {
 
 CONFIG_SCHEMA = event.event_schema(event.Event).extend(
     {
-        cv.GenerateID(CONF_FLIC_TWIST_ID): cv.use_id(FlicClientBase),
+        cv.GenerateID(CONF_FLIC_ID): cv.use_id(FlicClientBase),
         # Duo only: which of its two buttons this entity reports.
         cv.Optional(CONF_DUO_BUTTON): cv.one_of(*DUO_BUTTONS, lower=True),
     }
@@ -62,7 +62,7 @@ CONFIG_SCHEMA = event.event_schema(event.Event).extend(
 
 
 def _final_validate(config):
-    device_type = device_type_of(config[CONF_FLIC_TWIST_ID])
+    device_type = device_type_of(config[CONF_FLIC_ID])
     if device_type == DEVICE_DUO and CONF_DUO_BUTTON not in config:
         raise cv.Invalid("A Flic Duo has one event entity per button: set duo_button: big|small")
     if device_type != DEVICE_DUO and CONF_DUO_BUTTON in config:
@@ -74,8 +74,8 @@ FINAL_VALIDATE_SCHEMA = _final_validate
 
 
 async def to_code(config):
-    hub = await cg.get_variable(config[CONF_FLIC_TWIST_ID])
-    device_type = device_type_of(config[CONF_FLIC_TWIST_ID]) or DEVICE_TWIST
+    hub = await cg.get_variable(config[CONF_FLIC_ID])
+    device_type = device_type_of(config[CONF_FLIC_ID]) or DEVICE_TWIST
     ev = await event.new_event(config, event_types=EVENT_TYPES[device_type])
     if device_type == DEVICE_DUO:
         cg.add(hub.set_duo_button_event(DUO_BUTTONS[config[CONF_DUO_BUTTON]], ev))

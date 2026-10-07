@@ -20,7 +20,7 @@
 #include <cstring>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 inline uint32_t chaskey_rotl(uint32_t x, int n) { return (x << n) | (x >> (32 - n)); }
 
@@ -164,5 +164,5 @@ inline void chaskey_16(const uint32_t keys[12], const uint8_t data[16], uint8_t 
   chaskey_store_le32(out + 12, v3);
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome

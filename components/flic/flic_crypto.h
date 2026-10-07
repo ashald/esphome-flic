@@ -27,7 +27,7 @@ extern "C" {
 #include <mbedtls/md.h>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 // Flic Twist Ed25519 public key (pyflic-ble const.py TWIST_ED25519_PUBLIC_KEY).
 static const uint8_t TWIST_ED25519_PUBLIC_KEY[32] = {
@@ -118,7 +118,7 @@ inline void flic_derive_full_verify_keys(const uint8_t shared[32], uint8_t varia
   memcpy(out_pairing_key, pk + 4, 16);
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

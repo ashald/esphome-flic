@@ -1,6 +1,6 @@
 # esphome-flic: Flic Twist, Flic 2 and Flic Duo on ESPHome
 
-`flic_twist` is an ESPHome external component that lets an ESP32 own the Bluetooth link to Flic
+`flic` is an ESPHome external component that lets an ESP32 own the Bluetooth link to Flic
 devices directly: no Flic Hub, no phone, no Home Assistant Bluetooth adapter or proxy. Each device is
 paired to the ESP, kept connected around the clock, and shows up in Home Assistant as a
 sub-device of the ESP node with events, numbers and diagnostics.
@@ -49,7 +49,7 @@ logger:
 
 external_components:
   - source: github://ashald/esphome-flic
-    components: [flic_twist]
+    components: [flic]
 
 esp32_ble:
   max_connections: 3   # one per Flic below
@@ -71,7 +71,7 @@ packages:
         vars: {fd_id: desk, fd_name: "Desk"}
 
 sensor:
-  - platform: flic_twist   # hub level: Flics configured, paired and connected
+  - platform: flic   # hub level: Flics configured, paired and connected
     slots:
       name: "Flic slots"
     paired:
@@ -81,12 +81,21 @@ sensor:
 ```
 
 Each `vars` entry adds one device. For a second device of the same type, repeat its path with
-another `*_id` and `*_name`. With a local copy of the packages, include them instead:
+another `*_id` and `*_name`.
+
+To work from a local checkout instead, for example this repository added as a git submodule
+named `esphome-flic` next to your configs, point both at it:
 
 ```yaml
+external_components:
+  - source:
+      type: local
+      path: esphome-flic/components
+    components: [flic]
+
 packages:
   hall: !include
-    file: packages/flic-twist.yaml
+    file: esphome-flic/packages/flic-twist.yaml
     vars: {tw_id: hall, tw_name: "Hall"}
 ```
 
@@ -94,7 +103,7 @@ Then flash the hub, and pair each device as described under Pairing.
 
 ## Packages
 
-Each package declares the device's BLE client, its `flic_twist` entry and every entity, grouped
+Each package declares the device's BLE client, its `flic` entry and every entity, grouped
 into one Home Assistant device named "<name> Flic Twist", "<name> Flic Button" or "<name> Flic
 Duo". The optional `tw_mac`, `fb_mac` or `fd_mac` variable pins the device's address; without it
 the slot learns the address when pairing. The packages double as the reference for configuring a
@@ -104,7 +113,7 @@ device by hand.
 <summary><code>packages/flic-twist.yaml</code></summary>
 
 ```yaml
-# One Flic Twist on a flic_twist hub. Include it once per Twist:
+# One Flic Twist on an ESPHome Flic hub. Include it once per Twist:
 #
 #   packages:
 #     hall: !include
@@ -130,26 +139,26 @@ ble_client:
   - id: ${tw_id}_ble
     mac_address: ${tw_mac}
 
-flic_twist:
+flic:
   - id: ${tw_id}
     ble_client_id: ${tw_id}_ble
     push_twist_mode: selector
 
 number:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     device_id: ${tw_id}_dev
     name: "Position"
 
 event:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     device_id: ${tw_id}_dev
     name: "Events"
 
 sensor:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     mode:
       name: "Mode"
       device_id: ${tw_id}_dev
@@ -164,38 +173,38 @@ sensor:
       device_id: ${tw_id}_dev
 
 button:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type: pair
     device_id: ${tw_id}_dev
     name: "Pair"
   # One-shot creds export to migrate this Twist to a new board WITHOUT re-pairing (logs the bond
   # secret to the ESP log) — hidden by default; enable it in HA only when migrating.
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type: dump_creds
     device_id: ${tw_id}_dev
     name: "Dump creds"
     disabled_by_default: true
   # Wipe stored creds to free this slot for re-pairing (e.g. move to another hub) — destructive,
   # so hidden by default; enable it in HA only when intentionally unpairing.
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type: unpair
     device_id: ${tw_id}_dev
     name: "Unpair"
     disabled_by_default: true
 
 binary_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     connected:
       name: "Connected"
       device_id: ${tw_id}_dev
 
 text_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${tw_id}
+  - platform: flic
+    flic_id: ${tw_id}
     type:
       name: "Type"
       device_id: ${tw_id}_dev
@@ -219,7 +228,7 @@ text_sensor:
 <summary><code>packages/flic-button.yaml</code></summary>
 
 ```yaml
-# One Flic 2 on a flic_twist hub. Include it once per button:
+# One Flic 2 on an ESPHome Flic hub. Include it once per button:
 #
 #   packages:
 #     door: !include
@@ -243,20 +252,20 @@ ble_client:
   - id: ${fb_id}_ble
     mac_address: ${fb_mac}
 
-flic_twist:
+flic:
   - id: ${fb_id}
     device_type: button
     ble_client_id: ${fb_id}_ble
 
 event:
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     device_id: ${fb_id}_dev
     name: "Events"
 
 sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     battery_level:
       name: "Battery"
       device_id: ${fb_id}_dev
@@ -268,34 +277,34 @@ sensor:
       device_id: ${fb_id}_dev
 
 button:
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     type: pair
     device_id: ${fb_id}_dev
     name: "Pair"
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     type: dump_creds
     device_id: ${fb_id}_dev
     name: "Dump creds"
     disabled_by_default: true
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     type: unpair
     device_id: ${fb_id}_dev
     name: "Unpair"
     disabled_by_default: true
 
 binary_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     connected:
       name: "Connected"
       device_id: ${fb_id}_dev
 
 text_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fb_id}
+  - platform: flic
+    flic_id: ${fb_id}
     type:
       name: "Type"
       device_id: ${fb_id}_dev
@@ -319,7 +328,7 @@ text_sensor:
 <summary><code>packages/flic-duo.yaml</code></summary>
 
 ```yaml
-# One Flic Duo on a flic_twist hub. Include it once per Duo:
+# One Flic Duo on an ESPHome Flic hub. Include it once per Duo:
 #
 #   packages:
 #     desk: !include
@@ -345,38 +354,38 @@ ble_client:
   - id: ${fd_id}_ble
     mac_address: ${fd_mac}
 
-flic_twist:
+flic:
   - id: ${fd_id}
     device_type: duo
     ble_client_id: ${fd_id}_ble
 
 event:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: big
     device_id: ${fd_id}_dev
     name: "Big button"
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: small
     device_id: ${fd_id}_dev
     name: "Small button"
 
 number:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: big
     device_id: ${fd_id}_dev
     name: "Big dial"
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: small
     device_id: ${fd_id}_dev
     name: "Small dial"
 
 sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     battery_level:
       name: "Battery"
       device_id: ${fd_id}_dev
@@ -388,34 +397,34 @@ sensor:
       device_id: ${fd_id}_dev
 
 button:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type: pair
     device_id: ${fd_id}_dev
     name: "Pair"
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type: dump_creds
     device_id: ${fd_id}_dev
     name: "Dump creds"
     disabled_by_default: true
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type: unpair
     device_id: ${fd_id}_dev
     name: "Unpair"
     disabled_by_default: true
 
 binary_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     connected:
       name: "Connected"
       device_id: ${fd_id}_dev
 
 text_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type:
       name: "Type"
       device_id: ${fd_id}_dev
@@ -456,7 +465,7 @@ client can hold its connection at a time, so remove it from the other system fir
 
 ## Configuration
 
-Per device (`flic_twist:` list entries):
+Per device (`flic:` list entries):
 
 | Option | Default | Applies to | Meaning |
 | --- | --- | --- | --- |
@@ -501,7 +510,7 @@ pushing and twisting, and mode 12 for plain rotation. `push_twist_mode` picks th
 | `text_sensor` | `firmware_version`, `device_name`, `mac` | ✓ | ✓ | ✓ | |
 | `button` | `type: pair` / `dump_creds` / `unpair` | ✓ | ✓ | ✓ | See Pairing. |
 
-Hub level, without `flic_twist_id`: `sensor` keys `slots`, `paired` and `connected` count the
+Hub level, without `flic_id`: `sensor` keys `slots`, `paired` and `connected` count the
 slots on the node, those with credentials, and those with a session up. They are handy for a
 "some Flic is offline" alert.
 
@@ -543,11 +552,11 @@ continues from there. Values are stored in flash and survive reboots. A Twist wr
 it is disconnected is applied when it reconnects.
 
 ```yaml
-- flic_twist.set_position:
+- flic.set_position:
     id: hall
     position: !lambda return x;   # 0-100
     twist_mode: 3                  # Twist: optional, default = the mode it is in
-- flic_twist.set_position:
+- flic.set_position:
     id: desk
     position: 40
     duo_button: big                # Duo: required
@@ -662,7 +671,7 @@ automation editor's YAML mode.
 
 ## Tests
 
-`tests/flic_twist/run.sh` runs host tests of the protocol logic. It needs
+`tests/flic/run.sh` runs host tests of the protocol logic. It needs
 Python 3 and a C++17 compiler.
 
 - **Flic 2 event codes** (`flic2_events.h`): all 16 codes against the specification's table.

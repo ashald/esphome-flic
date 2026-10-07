@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Borys Pierov
-"""Test vectors for components/flic_twist/duo_codec.h (the Flic Duo event decoder).
+"""Test vectors for components/flic/duo_codec.h (the Flic Duo event decoder).
 
 Random event packets are encoded straight from the Flic Duo protocol specification ("Event encoding"),
 decoded by a plain reference decoder written from the same text (which must reproduce the encoder

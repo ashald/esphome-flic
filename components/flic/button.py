@@ -15,21 +15,21 @@ import esphome.config_validation as cv
 from esphome.components import button
 from esphome.const import ENTITY_CATEGORY_DIAGNOSTIC
 
-from . import CONF_FLIC_TWIST_ID, FlicClientBase, flic_twist_ns
+from . import CONF_FLIC_ID, FlicClientBase, flic_ns
 
-FlicPairButton = flic_twist_ns.class_(
+FlicPairButton = flic_ns.class_(
     "FlicPairButton", button.Button, cg.Parented.template(FlicClientBase)
 )
-FlicDumpCredsButton = flic_twist_ns.class_(
+FlicDumpCredsButton = flic_ns.class_(
     "FlicDumpCredsButton", button.Button, cg.Parented.template(FlicClientBase)
 )
-FlicUnpairButton = flic_twist_ns.class_(
+FlicUnpairButton = flic_ns.class_(
     "FlicUnpairButton", button.Button, cg.Parented.template(FlicClientBase)
 )
 
 CONF_TYPE = "type"
 
-_FLIC = {cv.GenerateID(CONF_FLIC_TWIST_ID): cv.use_id(FlicClientBase)}
+_FLIC = {cv.GenerateID(CONF_FLIC_ID): cv.use_id(FlicClientBase)}
 
 CONFIG_SCHEMA = cv.typed_schema(
     {
@@ -48,4 +48,4 @@ CONFIG_SCHEMA = cv.typed_schema(
 
 async def to_code(config):
     b = await button.new_button(config)
-    await cg.register_parented(b, config[CONF_FLIC_TWIST_ID])
+    await cg.register_parented(b, config[CONF_FLIC_ID])

@@ -18,7 +18,7 @@
 #include <cstdint>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 static const int32_t UNITS_PER_SLICE = 4096;
 static const int32_t D360 = 12 * UNITS_PER_SLICE;  // 49152 raw units == 100%
@@ -142,5 +142,5 @@ class MultiModeRotateTracker {
   bool wrap_position_ = false;
 };
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome

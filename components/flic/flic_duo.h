@@ -19,7 +19,7 @@
 //
 // The event / dial behaviour (swipes replace clicks, twists drop their click and hold, rotation
 // gating and backlash filtering) lives in duo_input.h, the bit-stream decoder in duo_codec.h; both
-// are header-only and host-tested (tests/flic_twist).
+// are header-only and host-tested (tests/flic).
 //
 // The dial: `dial_range` of rotation (default 90 degrees) spans 0-100 %, clamped. A rotate event
 // fires per notification in which the rotation crossed at least one 1 %-of-range step, measured on
@@ -34,7 +34,7 @@
 #ifdef USE_ESP32
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 class FlicDuo : public FlicButton, public DuoInputListener {
  public:
@@ -89,7 +89,7 @@ class FlicDuo : public FlicButton, public DuoInputListener {
   ESPPreferenceObject dial_pref_;
 };
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

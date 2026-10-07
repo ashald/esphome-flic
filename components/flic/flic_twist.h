@@ -20,7 +20,7 @@
 // into the init packet, which is how the Twist restores ring positions across connections), so a
 // write that lands while the Twist is disconnected is not lost and a hub reboot does not bring the
 // ring up dark. Writes come from the Position number entities (FlicPositionNumber, bound to the
-// active mode or to a fixed mode) or from the flic_twist.set_position action.
+// active mode or to a fixed mode) or from the flic.set_position action.
 
 #include "flic_client_base.h"
 
@@ -30,7 +30,7 @@
 #include "rotate_tracker.h"
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 enum PushTwistMode : uint8_t {
   PTM_DEFAULT = 0,
@@ -122,7 +122,7 @@ class FlicTwist : public FlicClientBase {
   sensor::Sensor *mode_sensor_{nullptr};
 };
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

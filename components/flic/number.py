@@ -15,7 +15,7 @@ the dial (the Duo has no indicator), e.g. to a light's brightness so the next tw
 there. Remembered in NVS.
 
 Flic 2 buttons have no position. (`mode:` keeps ESPHome's meaning for numbers: the UI style.) For
-programmatic use see the flic_twist.set_position action.
+programmatic use see the flic.set_position action.
 """
 
 import esphome.codegen as cg
@@ -25,17 +25,17 @@ from esphome.const import UNIT_PERCENT
 
 from . import (
     CONF_DUO_BUTTON,
-    CONF_FLIC_TWIST_ID,
+    CONF_FLIC_ID,
     CONF_TWIST_MODE,
     DEVICE_TWIST,
     DUO_BUTTONS,
     FlicClientBase,
     device_type_of,
-    flic_twist_ns,
+    flic_ns,
     selector_for,
 )
 
-FlicPositionNumber = flic_twist_ns.class_(
+FlicPositionNumber = flic_ns.class_(
     "FlicPositionNumber", number.Number, cg.Parented.template(FlicClientBase)
 )
 
@@ -43,7 +43,7 @@ CONFIG_SCHEMA = number.number_schema(
     FlicPositionNumber, unit_of_measurement=UNIT_PERCENT, icon="mdi:rotate-360"
 ).extend(
     {
-        cv.GenerateID(CONF_FLIC_TWIST_ID): cv.use_id(FlicClientBase),
+        cv.GenerateID(CONF_FLIC_ID): cv.use_id(FlicClientBase),
         # Twist: selector mode this number is bound to (0-11 slots, 12 push-twist); omit = active mode.
         cv.Optional(CONF_TWIST_MODE): cv.int_range(min=0, max=12),
         # Duo: which button's dial.
@@ -53,7 +53,7 @@ CONFIG_SCHEMA = number.number_schema(
 
 
 def _final_validate(config):
-    selector_for(config, device_type_of(config[CONF_FLIC_TWIST_ID]), "number")
+    selector_for(config, device_type_of(config[CONF_FLIC_ID]), "number")
     return config
 
 
@@ -62,8 +62,8 @@ FINAL_VALIDATE_SCHEMA = _final_validate
 
 async def to_code(config):
     n = await number.new_number(config, min_value=0, max_value=100, step=1)
-    await cg.register_parented(n, config[CONF_FLIC_TWIST_ID])
-    device_type = device_type_of(config[CONF_FLIC_TWIST_ID]) or DEVICE_TWIST
+    await cg.register_parented(n, config[CONF_FLIC_ID])
+    device_type = device_type_of(config[CONF_FLIC_ID]) or DEVICE_TWIST
     cg.add(n.set_selector(selector_for(config, device_type, "number")))
-    hub = await cg.get_variable(config[CONF_FLIC_TWIST_ID])
+    hub = await cg.get_variable(config[CONF_FLIC_ID])
     cg.add(hub.add_position_number(n))

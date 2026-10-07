@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-using namespace esphome::flic_twist;
+using namespace esphome::flic;
 
 struct Rec : DuoInputListener {
   std::vector<std::string> ev;

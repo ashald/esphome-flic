@@ -8,7 +8,7 @@
 #ifdef USE_ESP32
 
 #include "chaskey.h"
-#include "flic_twist_crypto.h"
+#include "flic_crypto.h"
 #include "esphome/core/log.h"
 #include "esphome/core/hal.h"
 #include "esphome/core/application.h"
@@ -22,13 +22,13 @@
 
 // TweetNaCl references randombytes() (from keypair/sign, which we don't call — but the linker
 // still needs the symbol). Back it with the ESP32 hardware RNG. Defined once here, for the whole
-// flic_twist component (both FlicTwist and FlicButton link against it).
+// flic component (FlicTwist, FlicButton and FlicDuo link against it).
 extern "C" void randombytes(unsigned char *buf, unsigned long long n) {
   esp_fill_random(buf, (size_t) n);
 }
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 static const char *const TAG = "flic";
 
@@ -897,7 +897,7 @@ void FlicClientBase::on_advert_(const ble_device_base::ESPBTDevice &device) {
     }
   }
   // Per-advert trace (DEBUG): whether the service UUID is visible and whether the device reports
-  // connected-elsewhere. Raise the logger to DEBUG for flic_twist to diagnose a discovery miss.
+  // connected-elsewhere. Raise the logger to DEBUG for the flic tag to diagnose a discovery miss.
   if (has_flic_uuid || has_flic_mfr) {
     ESP_LOGD(TAG, "advert %012llx rssi=%d uuids=%u mfr=%u flic_uuid=%d flic_mfr=%d flags=0x%02x",
              (unsigned long long) device.address_uint64(), device.get_rssi(),
@@ -982,7 +982,7 @@ void FlicClientBase::gattc_write_(const uint8_t *data, size_t len) {
   }
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

@@ -1,9 +1,9 @@
-esphome-flic: the flic_twist ESPHome component for Flic Twist, Flic 2 and Flic Duo
+esphome-flic: the flic ESPHome component for Flic Twist, Flic 2 and Flic Duo
 Copyright 2026 Borys Pierov
 
 Licensed under the Apache License, Version 2.0 (see LICENSE). This covers
-everything in this repository: the component (components/flic_twist), the
-device packages (packages/) and the host tests (tests/flic_twist).
+everything in this repository: the component (components/flic), the
+device packages (packages/) and the host tests (tests/flic).
 
 This product includes software derived from pyflic-ble
 (https://github.com/50ButtonsEach/pyflic-ble), Copyright Shortcut Labs,

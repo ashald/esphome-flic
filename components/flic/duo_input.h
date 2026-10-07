@@ -6,7 +6,7 @@
 #pragma once
 // Turns decoded Flic Duo updates (duo_codec.h) and push-twist notifications into the events and dial
 // movements the component exposes. Header-only and free of ESPHome dependencies so the behaviour
-// can be tested on a host (tests/flic_twist). FlicDuo feeds it and forwards its output to the entities.
+// can be tested on a host (tests/flic). FlicDuo feeds it and forwards its output to the entities.
 //
 // Events follow the spec's "single click / double click / hold" use case, with two refinements so
 // one physical gesture yields one event:
@@ -34,7 +34,7 @@
 #include "duo_codec.h"
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 class DuoInputListener {
  public:
@@ -276,5 +276,5 @@ class DuoInput {
   ButtonState btn_[2];
 };
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome

@@ -25,7 +25,7 @@
 #ifdef USE_ESP32
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 class FlicButton : public FlicClientBase {
  public:
@@ -99,7 +99,7 @@ class FlicButton : public FlicClientBase {
   uint32_t adv_timeout_s_{86400};      // 24 h
 };
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

@@ -4,7 +4,7 @@
 #pragma once
 // Flic 2 button-event codes (Flic 2 protocol specification, "Processing Button Events"), mapped for
 // the spec's "single click / double click / hold" use case. Header-only, host-tested
-// (tests/flic_twist).
+// (tests/flic).
 //
 // event_encoded (4 bits): bits 0-1 = up / down / single-click timeout / hold. With bit 3 set it is
 // an up carrying wasHold (bit 2), singleClick (bit 1 && !bit 0) and doubleClick (bit 1 && bit 0).
@@ -15,7 +15,7 @@
 #include <cstdint>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 // "click" / "double_click" / "hold", or nullptr for codes that are no such event.
 inline const char *flic2_event_type(uint8_t e) {
@@ -42,5 +42,5 @@ inline const char *flic2_event_type(uint8_t e) {
 // The spec's acknowledgement rule: (up && (singleClick || doubleClick)) || single-click timeout.
 inline bool flic2_event_needs_ack(uint8_t e) { return (e & 0x08) ? (e & 0x02) != 0 : (e & 0x03) == 2; }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome

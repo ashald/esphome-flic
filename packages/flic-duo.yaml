@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Borys Pierov
 #
-# One Flic Duo on a flic_twist hub. Include it once per Duo:
+# One Flic Duo on an ESPHome Flic hub. Include it once per Duo:
 #
 #   packages:
 #     desk: !include
@@ -27,38 +27,38 @@ ble_client:
   - id: ${fd_id}_ble
     mac_address: ${fd_mac}
 
-flic_twist:
+flic:
   - id: ${fd_id}
     device_type: duo
     ble_client_id: ${fd_id}_ble
 
 event:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: big
     device_id: ${fd_id}_dev
     name: "Big button"
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: small
     device_id: ${fd_id}_dev
     name: "Small button"
 
 number:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: big
     device_id: ${fd_id}_dev
     name: "Big dial"
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     duo_button: small
     device_id: ${fd_id}_dev
     name: "Small dial"
 
 sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     battery_level:
       name: "Battery"
       device_id: ${fd_id}_dev
@@ -70,34 +70,34 @@ sensor:
       device_id: ${fd_id}_dev
 
 button:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type: pair
     device_id: ${fd_id}_dev
     name: "Pair"
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type: dump_creds
     device_id: ${fd_id}_dev
     name: "Dump creds"
     disabled_by_default: true
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type: unpair
     device_id: ${fd_id}_dev
     name: "Unpair"
     disabled_by_default: true
 
 binary_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     connected:
       name: "Connected"
       device_id: ${fd_id}_dev
 
 text_sensor:
-  - platform: flic_twist
-    flic_twist_id: ${fd_id}
+  - platform: flic
+    flic_id: ${fd_id}
     type:
       name: "Type"
       device_id: ${fd_id}_dev

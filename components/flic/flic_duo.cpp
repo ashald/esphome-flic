@@ -16,7 +16,7 @@
 #include <cstdlib>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 static const char *const TAG = "flic_duo";
 
@@ -239,7 +239,7 @@ bool FlicDuo::write_position(float percentage, int selector) {
   return true;
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

@@ -20,7 +20,7 @@
 #include <cstdint>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 // Per-session decoder state. Before the first notification of a session: ts_ms = 0, count = the
 // init response's event counts, end_of_queue = !has_queued_events.
@@ -131,5 +131,5 @@ template<typename F> bool duo_decode_events(DuoDecoderState &st, const uint8_t *
   return true;
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome

@@ -5,7 +5,7 @@
 #include "flic2_events.h"
 #include <cstdio>
 #include <cstring>
-using namespace esphome::flic_twist;
+using namespace esphome::flic;
 
 int main() {
   // Expected per the spec's "single click / double click / hold" use case and ACK rule.

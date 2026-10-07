@@ -8,14 +8,14 @@
 #ifdef USE_ESP32
 
 #include "chaskey.h"
-#include "flic_twist_crypto.h"  // TWIST_ED25519_PUBLIC_KEY
+#include "flic_crypto.h"  // TWIST_ED25519_PUBLIC_KEY
 #include "esphome/core/log.h"
 #include "esphome/core/hal.h"
 
 #include <cmath>
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 static const char *const TAG = "flic_twist";
 
@@ -458,7 +458,7 @@ void FlicTwist::send_update_twist_position_(float percentage, uint8_t mode) {
   this->write_authenticated_(p, sizeof(p));
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32

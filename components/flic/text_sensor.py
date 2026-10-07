@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Borys Pierov
-"""Text sensors for a Flic device (Twist, Flic 2 or Duo), all needing `flic_twist_id`:
+"""Text sensors for a Flic device (Twist, Flic 2 or Duo), all needing `flic_id`:
 
   type              the device type: "twist", "flic2" or "duo",
   status            "not paired" (no creds) / "disconnected" (paired, no session) / "connected",
@@ -14,7 +14,7 @@ import esphome.config_validation as cv
 from esphome.components import text_sensor
 from esphome.const import ENTITY_CATEGORY_DIAGNOSTIC
 
-from . import CONF_FLIC_TWIST_ID, FlicClientBase
+from . import CONF_FLIC_ID, FlicClientBase
 
 CONF_TYPE = "type"
 CONF_STATUS = "status"
@@ -24,7 +24,7 @@ CONF_MAC = "mac"
 
 CONFIG_SCHEMA = cv.Schema(
     {
-        cv.GenerateID(CONF_FLIC_TWIST_ID): cv.use_id(FlicClientBase),
+        cv.GenerateID(CONF_FLIC_ID): cv.use_id(FlicClientBase),
         cv.Optional(CONF_TYPE): text_sensor.text_sensor_schema(
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
             icon="mdi:shape",
@@ -47,7 +47,7 @@ CONFIG_SCHEMA = cv.Schema(
 
 
 async def to_code(config):
-    hub = await cg.get_variable(config[CONF_FLIC_TWIST_ID])
+    hub = await cg.get_variable(config[CONF_FLIC_ID])
     for key, setter in (
         (CONF_TYPE, hub.set_type_text_sensor),
         (CONF_STATUS, hub.set_status_text_sensor),

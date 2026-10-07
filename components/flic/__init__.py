@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Borys Pierov
-"""flic_twist: ESPHome external component driving Flic devices over BLE.
+"""flic: ESPHome external component driving Flic devices over BLE.
 
 A dedicated ESP node owns the GATT link to each Flic device (reconnecting on its own),
 independent of Home Assistant. Paired on-device via the Pair button (or provisioned with the
@@ -42,24 +42,24 @@ AUTO_LOAD = [
 ]
 MULTI_CONF = True
 
-flic_twist_ns = cg.esphome_ns.namespace("flic_twist")
-FlicClientBase = flic_twist_ns.class_(
+flic_ns = cg.esphome_ns.namespace("flic")
+FlicClientBase = flic_ns.class_(
     "FlicClientBase", ble_client.BLEClientNode, cg.Component
 )
-FlicTwist = flic_twist_ns.class_("FlicTwist", FlicClientBase)
-FlicButton = flic_twist_ns.class_("FlicButton", FlicClientBase)
-FlicDuo = flic_twist_ns.class_("FlicDuo", FlicButton)
-SetPositionAction = flic_twist_ns.class_("SetPositionAction", automation.Action)
+FlicTwist = flic_ns.class_("FlicTwist", FlicClientBase)
+FlicButton = flic_ns.class_("FlicButton", FlicClientBase)
+FlicDuo = flic_ns.class_("FlicDuo", FlicButton)
+SetPositionAction = flic_ns.class_("SetPositionAction", automation.Action)
 
-PushTwistMode = flic_twist_ns.enum("PushTwistMode")
+PushTwistMode = flic_ns.enum("PushTwistMode")
 PUSH_TWIST_MODES = {
     "default": PushTwistMode.PTM_DEFAULT,
     "selector": PushTwistMode.PTM_SELECTOR,
     "continuous": PushTwistMode.PTM_CONTINUOUS,
 }
 
-DOMAIN = "flic_twist"
-CONF_FLIC_TWIST_ID = "flic_twist_id"
+DOMAIN = "flic"
+CONF_FLIC_ID = "flic_id"
 CONF_DEVICE_TYPE = "device_type"
 CONF_TWIST_MODE = "twist_mode"  # a Twist selector mode: 0-11 slots, 12 push-twist
 CONF_DUO_BUTTON = "duo_button"  # which Duo button an entity / action is about
@@ -81,7 +81,7 @@ DUO_BUTTONS = {"big": 0, "small": 1}
 
 
 def device_config(hub_id):
-    """The flic_twist entry that declares `hub_id`, during final validation or codegen."""
+    """The flic entry that declares `hub_id`, during final validation or codegen."""
     try:
         fconf = fv.full_config.get()
     except LookupError:
@@ -258,13 +258,13 @@ async def to_code(config):
     cg.add(var.set_conn_params(min_iv, max_iv, config[CONF_CONNECTION_LATENCY], timeout))
 
 
-# flic_twist.set_position: set a position (0-100 %):
+# flic.set_position: set a position (0-100 %):
 #   - Twist: the LED ring of a selector mode (twist_mode 0-11, 12 = push-twist; omitted = the mode
 #     the Twist is in now). Remembered (NVS) and applied on the next session if disconnected.
 #   - Duo: the dial of one button (duo_button: big|small, required) — re-bases it, e.g. to a
 #     light's brightness so the next push-twist continues from there.
 #
-#   - flic_twist.set_position:
+#   - flic.set_position:
 #       id: living
 #       position: !lambda return x;   # 0-100
 #       twist_mode: 3                  # Twist, optional
@@ -288,7 +288,7 @@ _ACTION_KW = (
 
 
 @automation.register_action(
-    "flic_twist.set_position", SetPositionAction, SET_POSITION_SCHEMA, **_ACTION_KW
+    "flic.set_position", SetPositionAction, SET_POSITION_SCHEMA, **_ACTION_KW
 )
 async def set_position_to_code(config, action_id, template_arg, args):
     device_type = device_type_of(config[CONF_ID])
@@ -297,7 +297,7 @@ async def set_position_to_code(config, action_id, template_arg, args):
         try:
             selector = selector_for(config, device_type, "")
         except cv.Invalid as err:
-            raise EsphomeError(f"flic_twist.set_position on '{config[CONF_ID]}': {err}") from err
+            raise EsphomeError(f"flic.set_position on '{config[CONF_ID]}': {err}") from err
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_ID])
     cg.add(var.set_position(await cg.templatable(config[CONF_POSITION], args, float)))

@@ -9,11 +9,11 @@
 
 #include "chaskey.h"
 #include "flic2_events.h"
-#include "flic_twist_crypto.h"  // FLIC2_ED25519_PUBLIC_KEY
+#include "flic_crypto.h"  // FLIC2_ED25519_PUBLIC_KEY
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace flic_twist {
+namespace flic {
 
 static const char *const TAG = "flic_button";
 
@@ -396,7 +396,7 @@ void FlicButton::send_ack_(uint32_t event_counter) {
   this->write_authenticated_(p, sizeof(p));
 }
 
-}  // namespace flic_twist
+}  // namespace flic
 }  // namespace esphome
 
 #endif  // USE_ESP32
