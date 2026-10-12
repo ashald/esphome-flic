@@ -4,10 +4,9 @@
 
 ### Documentation
 
-- **Board families** ([docs/boards.md](docs/boards.md)): how many devices a hub holds on each
-  ESP32 family and what to set. Every family tops out at six, the Bluetooth host's limit; an
-  ESP32-S3 or C3 stops at five until `CONFIG_BT_CTRL_BLE_MAX_ACT` is raised, which the quick
-  start now does.
+- **Board families** ([docs/boards.md](docs/boards.md)): how many devices a hub holds on the
+  families we tested, a classic ESP32 and an ESP32-S3, and the sdkconfig option an ESP32-S3
+  needs to connect a sixth device. The quick start now sets it.
 
 ## 0.1.0 - 2026-10-07
 

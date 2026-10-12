@@ -17,9 +17,8 @@ protocol all run on the ESP.
 
 ## Hardware
 
-- An ESP32 with Bluetooth, on the `esp-idf` framework. A hub holds up to six devices on every
-  family; an ESP32-S3 or C3 needs one sdkconfig option to get past five.
-  [Board families](docs/boards.md) has the limits and settings per family.
+- An ESP32 with the `esp-idf` framework. A classic ESP32 or an ESP32-S3 hub holds six
+  devices; the S3 needs one sdkconfig option for its sixth. See [Board families](docs/boards.md).
 - Every device is one BLE connection: set `esp32_ble: max_connections` to the number of
   slots.
 - Keep the board a few metres from Wi-Fi access points and other 2.4 GHz transmitters. A hub
@@ -41,7 +40,7 @@ esp32:
   framework:
     type: esp-idf
     sdkconfig_options:
-      CONFIG_BT_CTRL_BLE_MAX_ACT: "10"   # S3/C3: room for six devices while scanning (docs/boards.md)
+      CONFIG_BT_CTRL_BLE_MAX_ACT: "10"   # ESP32-S3: lets a sixth device connect (docs/boards.md)
 
 wifi:
   ssid: !secret wifi_ssid
