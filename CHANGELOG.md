@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+
+- **Board families** ([docs/boards.md](docs/boards.md)): how many devices a hub holds on each
+  ESP32 family and what to set. Every family tops out at six, the Bluetooth host's limit; an
+  ESP32-S3 or C3 stops at five until `CONFIG_BT_CTRL_BLE_MAX_ACT` is raised, which the quick
+  start now does.
+
 ## 0.1.0 - 2026-10-07
 
 First release of `flic`, an ESPHome component that lets an ESP32 hold the Bluetooth link to Flic

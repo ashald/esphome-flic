@@ -17,14 +17,15 @@ protocol all run on the ESP.
 
 ## Hardware
 
-- An ESP32 with the `esp-idf` framework. An ESP32-S3 is the comfortable choice; a classic
-  ESP32 handles about 6 devices.
+- An ESP32 with Bluetooth, on the `esp-idf` framework. A hub holds up to six devices on every
+  family; an ESP32-S3 or C3 needs one sdkconfig option to get past five.
+  [Board families](docs/boards.md) has the limits and settings per family.
 - Every device is one BLE connection: set `esp32_ble: max_connections` to the number of
   slots.
 - Keep the board a few metres from Wi-Fi access points and other 2.4 GHz transmitters. A hub
   sitting next to an AP saw roughly 100 times more link drops than identical hubs elsewhere.
-- Tested with ESPHome 2026.9.0 on Adafruit Feather ESP32 V2 hubs, classic ESP32 with six devices
-  each, and a Seeed XIAO ESP32S3. Device firmware: Flic Twist 2, Flic 2 11, Flic Duo 15.
+- Tested with ESPHome 2026.9.0 on Adafruit Feather ESP32 V2 (classic ESP32) and Seeed XIAO
+  ESP32S3 hubs with up to six devices each. Device firmware: Flic Twist 2, Flic 2 11, Flic Duo 15.
 
 ## Quick start
 
@@ -39,6 +40,8 @@ esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
+    sdkconfig_options:
+      CONFIG_BT_CTRL_BLE_MAX_ACT: "10"   # S3/C3: room for six devices while scanning (docs/boards.md)
 
 wifi:
   ssid: !secret wifi_ssid
