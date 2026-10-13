@@ -8,6 +8,8 @@ Per device (need `flic_id`):
                    polled hourly over the authenticated session,
   battery_level    remaining capacity estimated from the voltage with the family's chemistry curve,
   rssi             connection RSSI read on the open link (no scanning),
+  disconnects      open links that dropped, counted from boot (the Last disconnect text sensor
+                   says why and after how long),
   mode             (Twist only) the selector mode the knob is in, 0-11 = selector slots, 12 =
                    push-twist; learned from the first event after boot.
   stuck_reconnects (Twist only) times the hub reconnected the Twist because it kept sending
@@ -42,19 +44,27 @@ CONF_BATTERY_LEVEL = "battery_level"
 CONF_RSSI = "rssi"
 CONF_MODE = "mode"
 CONF_STUCK_RECONNECTS = "stuck_reconnects"
+CONF_DISCONNECTS = "disconnects"
 CONF_SLOTS = "slots"
 CONF_PAIRED = "paired"
 CONF_CONNECTED = "connected"
 
-_PER_DEVICE = (CONF_BATTERY_VOLTAGE, CONF_BATTERY_LEVEL, CONF_RSSI, CONF_MODE, CONF_STUCK_RECONNECTS)
+_PER_DEVICE = (
+    CONF_BATTERY_VOLTAGE,
+    CONF_BATTERY_LEVEL,
+    CONF_RSSI,
+    CONF_MODE,
+    CONF_STUCK_RECONNECTS,
+    CONF_DISCONNECTS,
+)
 _TWIST_ONLY = (CONF_MODE, CONF_STUCK_RECONNECTS)
 
 
 def _per_device_needs_id(config):
     if any(k in config for k in _PER_DEVICE) and CONF_FLIC_ID not in config:
         raise cv.Invalid(
-            "battery_voltage / battery_level / rssi / mode / stuck_reconnects are per-device sensors "
-            "and need flic_id"
+            "battery_voltage / battery_level / rssi / mode / stuck_reconnects / disconnects are "
+            "per-device sensors and need flic_id"
         )
     return config
 
@@ -88,6 +98,12 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_MODE): sensor.sensor_schema(
                 accuracy_decimals=0,
                 icon="mdi:dial",
+            ),
+            cv.Optional(CONF_DISCONNECTS): sensor.sensor_schema(
+                state_class=STATE_CLASS_TOTAL_INCREASING,
+                accuracy_decimals=0,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+                icon="mdi:link-variant-off",
             ),
             cv.Optional(CONF_STUCK_RECONNECTS): sensor.sensor_schema(
                 state_class=STATE_CLASS_TOTAL_INCREASING,
@@ -138,6 +154,8 @@ async def to_code(config):
             cg.add(hub.set_rssi_sensor(await sensor.new_sensor(config[CONF_RSSI])))
         if CONF_MODE in config:
             cg.add(hub.set_mode_sensor(await sensor.new_sensor(config[CONF_MODE])))
+        if CONF_DISCONNECTS in config:
+            cg.add(hub.set_disconnects_sensor(await sensor.new_sensor(config[CONF_DISCONNECTS])))
         if CONF_STUCK_RECONNECTS in config:
             cg.add(hub.set_stuck_reconnects_sensor(await sensor.new_sensor(config[CONF_STUCK_RECONNECTS])))
     for key, setter in (

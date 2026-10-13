@@ -11,9 +11,10 @@
 # The Duo appears in Home Assistant as its own device, "<fd_name> Flic Duo", under the hub, with:
 # Big button and Small button events (click, double_click, hold, four swipes, push-twist
 # rotation), Big dial and Small dial numbers (0-100 %, turned by holding the button and twisting
-# the Duo), Battery, Battery voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the
-# Pair, Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with
-# the Pair button, then hold the Duo's big button for about 7 s until it flashes.
+# the Duo), Battery, Battery voltage, RSSI, Disconnects, Connected, Type, Status, Firmware, Name,
+# MAC, Last disconnect, and the Pair, Dump creds, Unpair and Reconnect buttons (the last three
+# hidden by default). Pair it with the Pair button, then hold the Duo's big button for about 7 s
+# until it flashes.
 
 substitutions:
   fd_mac: "00:00:00:00:00:00"
@@ -68,6 +69,9 @@ sensor:
     rssi:
       name: "RSSI"
       device_id: ${fd_id}_dev
+    disconnects:
+      name: "Disconnects"
+      device_id: ${fd_id}_dev
 
 button:
   - platform: flic
@@ -119,4 +123,7 @@ text_sensor:
       device_id: ${fd_id}_dev
     mac:
       name: "MAC"
+      device_id: ${fd_id}_dev
+    last_disconnect:
+      name: "Last disconnect"  # why the last link dropped, and after how long
       device_id: ${fd_id}_dev

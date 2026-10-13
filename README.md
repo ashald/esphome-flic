@@ -126,11 +126,11 @@ device by hand.
 #
 # The Twist appears in Home Assistant as its own device, "<tw_name> Flic Twist", under the hub,
 # with: Position (the LED-ring position of the active mode), Events, Mode, Battery, Battery
-# voltage, RSSI, Stuck reconnects, Connected, Type, Status, Firmware, Name, MAC, and the Pair,
-# Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with the
-# Pair button; the credentials are kept in the hub's flash. push_twist_mode is selector (see the
-# README for the modes). More ring positions can be exposed as extra numbers with
-# `twist_mode: <0-12>`.
+# voltage, RSSI, Disconnects, Stuck reconnects, Connected, Type, Status, Firmware, Name, MAC, Last
+# disconnect, and the Pair, Dump creds, Unpair and Reconnect buttons (the last three hidden by
+# default). Pair it with the Pair button; the credentials are kept in the hub's flash.
+# push_twist_mode is selector (see the README for the modes). More ring positions can be exposed
+# as extra numbers with `twist_mode: <0-12>`.
 
 substitutions:
   tw_mac: "00:00:00:00:00:00"
@@ -175,6 +175,9 @@ sensor:
       device_id: ${tw_id}_dev
     rssi:
       name: "RSSI"
+      device_id: ${tw_id}_dev
+    disconnects:
+      name: "Disconnects"
       device_id: ${tw_id}_dev
     stuck_reconnects:
       name: "Stuck reconnects"
@@ -235,6 +238,9 @@ text_sensor:
     mac:
       name: "MAC"
       device_id: ${tw_id}_dev
+    last_disconnect:
+      name: "Last disconnect"  # why the last link dropped, and after how long
+      device_id: ${tw_id}_dev
 ```
 
 </details>
@@ -251,10 +257,10 @@ text_sensor:
 #       vars: {fb_id: door, fb_name: "Front Door"}    # fb_mac: optional, learned when pairing
 #
 # The button appears in Home Assistant as its own device, "<fb_name> Flic Button", under the hub,
-# with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Connected, Type,
-# Status, Firmware, Name, MAC, and the Pair, Dump creds, Unpair and Reconnect buttons (the last
-# three hidden by default). Pair it with the Pair button; the credentials are kept in the hub's
-# flash.
+# with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Disconnects,
+# Connected, Type, Status, Firmware, Name, MAC, Last disconnect, and the Pair, Dump creds, Unpair
+# and Reconnect buttons (the last three hidden by default). Pair it with the Pair button; the
+# credentials are kept in the hub's flash.
 
 substitutions:
   fb_mac: "00:00:00:00:00:00"
@@ -290,6 +296,9 @@ sensor:
       device_id: ${fb_id}_dev
     rssi:
       name: "RSSI"
+      device_id: ${fb_id}_dev
+    disconnects:
+      name: "Disconnects"
       device_id: ${fb_id}_dev
 
 button:
@@ -343,6 +352,9 @@ text_sensor:
     mac:
       name: "MAC"
       device_id: ${fb_id}_dev
+    last_disconnect:
+      name: "Last disconnect"  # why the last link dropped, and after how long
+      device_id: ${fb_id}_dev
 ```
 
 </details>
@@ -361,9 +373,10 @@ text_sensor:
 # The Duo appears in Home Assistant as its own device, "<fd_name> Flic Duo", under the hub, with:
 # Big button and Small button events (click, double_click, hold, four swipes, push-twist
 # rotation), Big dial and Small dial numbers (0-100 %, turned by holding the button and twisting
-# the Duo), Battery, Battery voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the
-# Pair, Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with
-# the Pair button, then hold the Duo's big button for about 7 s until it flashes.
+# the Duo), Battery, Battery voltage, RSSI, Disconnects, Connected, Type, Status, Firmware, Name,
+# MAC, Last disconnect, and the Pair, Dump creds, Unpair and Reconnect buttons (the last three
+# hidden by default). Pair it with the Pair button, then hold the Duo's big button for about 7 s
+# until it flashes.
 
 substitutions:
   fd_mac: "00:00:00:00:00:00"
@@ -418,6 +431,9 @@ sensor:
     rssi:
       name: "RSSI"
       device_id: ${fd_id}_dev
+    disconnects:
+      name: "Disconnects"
+      device_id: ${fd_id}_dev
 
 button:
   - platform: flic
@@ -469,6 +485,9 @@ text_sensor:
       device_id: ${fd_id}_dev
     mac:
       name: "MAC"
+      device_id: ${fd_id}_dev
+    last_disconnect:
+      name: "Last disconnect"  # why the last link dropped, and after how long
       device_id: ${fd_id}_dev
 ```
 
@@ -533,12 +552,14 @@ pushing and twisting, and mode 12 for plain rotation. `push_twist_mode` picks th
 | `sensor` | `battery_level` | ✓ | ✓ | ✓ | Percent from the cell voltage. Twist: 2×AAA. Flic 2 and Duo: CR2032. Read hourly. |
 | `sensor` | `battery_voltage` | ✓ | ✓ | ✓ | |
 | `sensor` | `rssi` | ✓ | ✓ | ✓ | Read on the open link every 60 s. |
+| `sensor` | `disconnects` | ✓ | ✓ | ✓ | Open links that dropped, since boot. |
 | `sensor` | `mode` | ✓ | | | Active Twist mode, learned from the first event after boot. |
 | `sensor` | `stuck_reconnects` | ✓ | | | Times the hub reconnected the Twist because it was stuck (see Reliability notes), since boot. |
 | `binary_sensor` | `connected` | ✓ | ✓ | ✓ | On while the authenticated session is up. |
 | `text_sensor` | `type` | ✓ | ✓ | ✓ | `twist`, `flic2` or `duo`. |
 | `text_sensor` | `status` | ✓ | ✓ | ✓ | `not paired`, `disconnected` or `connected`. |
 | `text_sensor` | `firmware_version`, `device_name`, `mac` | ✓ | ✓ | ✓ | |
+| `text_sensor` | `last_disconnect` | ✓ | ✓ | ✓ | Why the last link dropped and how long it had been up, e.g. `supervision timeout (0x08) after 3 h 12 min`. |
 | `button` | `type: pair` / `dump_creds` / `unpair` | ✓ | ✓ | ✓ | See Pairing. |
 | `button` | `type: reconnect` | ✓ | ✓ | ✓ | The device drops its link and the hub reconnects it on a fresh session, without restarting the hub. |
 

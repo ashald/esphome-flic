@@ -6,7 +6,9 @@
   status            "not paired" (no creds) / "disconnected" (paired, no session) / "connected",
   firmware_version  the device's firmware version number, requested once per session,
   device_name       the user-settable name stored on the device (GAP Device Name),
-  mac               the Bluetooth address the slot targets.
+  mac               the Bluetooth address the slot targets,
+  last_disconnect   why the last open link dropped and how long it had been up, e.g.
+                    "supervision timeout (0x08) after 3 h 12 min".
 """
 
 import esphome.codegen as cg
@@ -21,6 +23,7 @@ CONF_STATUS = "status"
 CONF_FIRMWARE_VERSION = "firmware_version"
 CONF_DEVICE_NAME = "device_name"
 CONF_MAC = "mac"
+CONF_LAST_DISCONNECT = "last_disconnect"
 
 CONFIG_SCHEMA = cv.Schema(
     {
@@ -42,6 +45,10 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_MAC): text_sensor.text_sensor_schema(
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         ),
+        cv.Optional(CONF_LAST_DISCONNECT): text_sensor.text_sensor_schema(
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+            icon="mdi:link-variant-off",
+        ),
     }
 )
 
@@ -54,6 +61,7 @@ async def to_code(config):
         (CONF_FIRMWARE_VERSION, hub.set_firmware_text_sensor),
         (CONF_DEVICE_NAME, hub.set_name_text_sensor),
         (CONF_MAC, hub.set_mac_text_sensor),
+        (CONF_LAST_DISCONNECT, hub.set_last_disconnect_text_sensor),
     ):
         if key in config:
             cg.add(setter(await text_sensor.new_text_sensor(config[key])))

@@ -157,6 +157,8 @@ class FlicClientBase : public ble_client::BLEClientNode,
   void set_type_text_sensor(text_sensor::TextSensor *t) { this->type_tsensor_ = t; }
   void set_firmware_text_sensor(text_sensor::TextSensor *t) { this->fw_tsensor_ = t; }
   void set_rssi_sensor(sensor::Sensor *s) { this->rssi_sensor_ = s; }
+  void set_disconnects_sensor(sensor::Sensor *s) { this->disconnects_sensor_ = s; }
+  void set_last_disconnect_text_sensor(text_sensor::TextSensor *t) { this->last_disconnect_tsensor_ = t; }
 
  protected:
   // ---- protocol hooks (implemented by FlicTwist / FlicButton) ----
@@ -238,6 +240,9 @@ class FlicClientBase : public ble_client::BLEClientNode,
   void publish_battery_voltage_(float volts);  // voltage sensor + level via the family curve
   void publish_firmware_version_(uint32_t version);
   void reset_session_();  // resets base session state, then on_reset_session_()
+  // A BLE link ended (or never came up): log why and for how long it had been up, count it and
+  // publish the Disconnects / Last disconnect entities. Before reset_session_().
+  void record_disconnect_(int reason);
   void update_conn_params_();
   bool get_link_params_(esp_gap_conn_params_t *p);  // negotiated params; false once the link is gone
   void trigger_event_(const char *type);
@@ -279,6 +284,8 @@ class FlicClientBase : public ble_client::BLEClientNode,
   uint32_t established_ms_{0};
   uint32_t last_battery_ms_{0};
   uint32_t last_rssi_ms_{0};
+  uint32_t link_open_ms_{0};  // when the current BLE link opened; 0 while there is none
+  uint32_t disconnects_{0};   // links that were open and dropped, since boot
 
   // pairing (full verify) — transient per attempt
   bool pairing_mode_{false};
@@ -299,9 +306,12 @@ class FlicClientBase : public ble_client::BLEClientNode,
   text_sensor::TextSensor *type_tsensor_{nullptr};
   text_sensor::TextSensor *fw_tsensor_{nullptr};
   sensor::Sensor *rssi_sensor_{nullptr};
+  sensor::Sensor *disconnects_sensor_{nullptr};
+  text_sensor::TextSensor *last_disconnect_tsensor_{nullptr};
   std::vector<FlicPositionNumber *> position_numbers_;  // Twist ring / Duo dial numbers
   bool name_requested_{false};  // read the device name once per session
   bool fw_requested_{false};    // request the firmware version once per session
+  bool link_params_logged_{false};  // log the negotiated link parameters once per session
   bool mac_published_{false};
 };
 

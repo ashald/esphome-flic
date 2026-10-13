@@ -182,6 +182,8 @@ bool FlicClientBase::parse_device(const ble_device_base::ESPBTDevice &device) {
 }
 
 void FlicClientBase::setup() {
+  if (this->disconnects_sensor_ != nullptr)
+    this->disconnects_sensor_->publish_state(0);  // counts from boot
   // Credentials are keyed by the STABLE slot id (md5 of the config id, storage_hash_). The config
   // MAC is only a discovery filter — present: connect to exactly that MAC; absent: scan for a
   // public-mode device of this type on Pair. A learned-MAC cache (own NVS slot) lets a slot
@@ -444,6 +446,14 @@ void FlicClientBase::loop() {
     this->fw_requested_ = true;
   }
 
+  // The link parameters in effect, once per session after our update request has settled.
+  esp_gap_conn_params_t lp;
+  if (!this->link_params_logged_ && (now - this->established_ms_) > 10000 && this->get_link_params_(&lp)) {
+    ESP_LOGI(TAG, "[%s] Link params: interval %.2f ms, latency %u, supervision timeout %u ms",
+             this->parent()->address_str(), lp.interval * 1.25f, (unsigned) lp.latency, (unsigned) lp.timeout * 10);
+    this->link_params_logged_ = true;
+  }
+
   // Battery poll (hourly), first read ~15s after the session comes up.
   static const uint32_t BATTERY_POLL_MS = 3600000UL;
   static const uint32_t BATTERY_FIRST_DELAY_MS = 15000UL;
@@ -469,8 +479,10 @@ void FlicClientBase::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if
                                          esp_ble_gattc_cb_param_t *param) {
   switch (event) {
     case ESP_GATTC_OPEN_EVT:
-      if (param->open.status == ESP_GATT_OK)
+      if (param->open.status == ESP_GATT_OK) {
         ESP_LOGD(TAG, "BLE link open");
+        this->link_open_ms_ = millis();
+      }
       break;
 
     case ESP_GATTC_SEARCH_CMPL_EVT: {
@@ -528,7 +540,7 @@ void FlicClientBase::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if
       break;
 
     case ESP_GATTC_DISCONNECT_EVT:
-      ESP_LOGD(TAG, "BLE disconnect (reason 0x%02x)", param->disconnect.reason);
+      this->record_disconnect_(param->disconnect.reason);
       this->notify_handle_ = 0;
       this->write_handle_ = 0;
       this->gap_name_handle_ = 0;
@@ -542,6 +554,64 @@ void FlicClientBase::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if
     default:
       break;
   }
+}
+
+// Why a BLE link ended: the HCI reason (Bluetooth Core Spec, Vol 1 Part F) or ESP-IDF's own
+// esp_gatt_conn_reason_t values above 0xFF.
+static const char *disconnect_reason_str(int reason) {
+  switch (reason) {
+    case 0x08:
+      return "supervision timeout";
+    case 0x13:
+      return "ended by the device";
+    case 0x16:
+      return "ended by the hub";
+    case 0x22:
+      return "link-layer response timeout";
+    case 0x3B:
+      return "connection parameters rejected";
+    case 0x3D:
+      return "MIC failure";
+    case 0x3E:
+      return "failed to establish";
+    case 0x100:
+      return "connection attempt cancelled";
+    default:
+      return "other";
+  }
+}
+
+static void format_duration(uint32_t ms, char *out, size_t n) {
+  const uint32_t s = ms / 1000;
+  if (s < 60)
+    snprintf(out, n, "%u s", (unsigned) s);
+  else if (s < 3600)
+    snprintf(out, n, "%u min", (unsigned) (s / 60));
+  else if (s < 172800)
+    snprintf(out, n, "%u h %u min", (unsigned) (s / 3600), (unsigned) (s % 3600 / 60));
+  else
+    snprintf(out, n, "%u d %u h", (unsigned) (s / 86400), (unsigned) (s % 86400 / 3600));
+}
+
+void FlicClientBase::record_disconnect_(int reason) {
+  if (this->link_open_ms_ == 0) {  // a connection attempt that never opened: not a dropped link
+    ESP_LOGD(TAG, "[%s] Connection attempt failed: %s (0x%02x)", this->parent()->address_str(),
+             disconnect_reason_str(reason), reason);
+    return;
+  }
+  const uint32_t since = this->established_ms_ != 0 ? this->established_ms_ : this->link_open_ms_;
+  char dur[24];
+  format_duration(millis() - since, dur, sizeof(dur));
+  char buf[96];
+  snprintf(buf, sizeof(buf), "%s (0x%02x) after %s%s", disconnect_reason_str(reason), reason, dur,
+           this->established_ms_ != 0 ? "" : ", before the session was up");
+  ESP_LOGI(TAG, "[%s] Link lost: %s", this->parent()->address_str(), buf);
+  this->link_open_ms_ = 0;
+  this->disconnects_++;
+  if (this->disconnects_sensor_ != nullptr)
+    this->disconnects_sensor_->publish_state(this->disconnects_);
+  if (this->last_disconnect_tsensor_ != nullptr)
+    this->last_disconnect_tsensor_->publish_state(buf);
 }
 
 void FlicClientBase::update_conn_params_() {
@@ -632,6 +702,7 @@ void FlicClientBase::handle_quick_verify_response_(const uint8_t *data, uint16_t
   this->last_battery_ms_ = 0;
   this->name_requested_ = false;
   this->fw_requested_ = false;
+  this->link_params_logged_ = false;
   ESP_LOGI(TAG, "Session established (quick verify OK)");
   if (this->connected_bsensor_ != nullptr)
     this->connected_bsensor_->publish_state(true);

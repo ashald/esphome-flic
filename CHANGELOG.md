@@ -11,6 +11,10 @@
   reconnects" in the Twist package).
 - **Reconnect button** (`type: reconnect`, in all three packages, hidden by default): the device
   drops its link and the hub reconnects it on a fresh session, without restarting the hub.
+- **Disconnect diagnostics.** Every device reports `disconnects`, the open links that dropped since
+  boot, and `last_disconnect`: why the link ended (supervision timeout, ended by the device, ended
+  by the hub, ...) and how long it had been up. The log also shows the connection parameters each
+  device accepted.
 
 ### Changed
 

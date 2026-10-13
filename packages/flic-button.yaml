@@ -9,10 +9,10 @@
 #       vars: {fb_id: door, fb_name: "Front Door"}    # fb_mac: optional, learned when pairing
 #
 # The button appears in Home Assistant as its own device, "<fb_name> Flic Button", under the hub,
-# with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Connected, Type,
-# Status, Firmware, Name, MAC, and the Pair, Dump creds, Unpair and Reconnect buttons (the last
-# three hidden by default). Pair it with the Pair button; the credentials are kept in the hub's
-# flash.
+# with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Disconnects,
+# Connected, Type, Status, Firmware, Name, MAC, Last disconnect, and the Pair, Dump creds, Unpair
+# and Reconnect buttons (the last three hidden by default). Pair it with the Pair button; the
+# credentials are kept in the hub's flash.
 
 substitutions:
   fb_mac: "00:00:00:00:00:00"
@@ -48,6 +48,9 @@ sensor:
       device_id: ${fb_id}_dev
     rssi:
       name: "RSSI"
+      device_id: ${fb_id}_dev
+    disconnects:
+      name: "Disconnects"
       device_id: ${fb_id}_dev
 
 button:
@@ -100,4 +103,7 @@ text_sensor:
       device_id: ${fb_id}_dev
     mac:
       name: "MAC"
+      device_id: ${fb_id}_dev
+    last_disconnect:
+      name: "Last disconnect"  # why the last link dropped, and after how long
       device_id: ${fb_id}_dev
