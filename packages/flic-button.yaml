@@ -10,8 +10,9 @@
 #
 # The button appears in Home Assistant as its own device, "<fb_name> Flic Button", under the hub,
 # with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Connected, Type,
-# Status, Firmware, Name, MAC, and the Pair, Dump creds and Unpair buttons (the last two hidden by
-# default). Pair it with the Pair button; the credentials are kept in the hub's flash.
+# Status, Firmware, Name, MAC, and the Pair, Dump creds, Unpair and Reconnect buttons (the last
+# three hidden by default). Pair it with the Pair button; the credentials are kept in the hub's
+# flash.
 
 substitutions:
   fb_mac: "00:00:00:00:00:00"
@@ -66,6 +67,13 @@ button:
     type: unpair
     device_id: ${fb_id}_dev
     name: "Unpair"
+    disabled_by_default: true
+  # Drop the link and reconnect on a fresh session, without restarting the hub. Hidden by default.
+  - platform: flic
+    flic_id: ${fb_id}
+    type: reconnect
+    device_id: ${fb_id}_dev
+    name: "Reconnect"
     disabled_by_default: true
 
 binary_sensor:

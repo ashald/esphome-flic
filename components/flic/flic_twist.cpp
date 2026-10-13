@@ -101,6 +101,8 @@ void FlicTwist::on_setup_() {
   }
   if (this->mode_sensor_ != nullptr)
     this->mode_sensor_->publish_state(this->active_mode_);
+  if (this->stuck_reconnects_sensor_ != nullptr)
+    this->stuck_reconnects_sensor_->publish_state(0);
 }
 
 void FlicTwist::seed_tracker_from_desired_(uint8_t mode) {
@@ -150,6 +152,7 @@ void FlicTwist::dump_config() {
   ESP_LOGCONFIG(TAG, "  push_twist_mode: %s", mode);
   ESP_LOGCONFIG(TAG, "  position numbers: %u, desired modes mask: 0x%04x", (unsigned) this->position_numbers_.size(),
                 (unsigned) this->desired_.valid_mask);
+  ESP_LOGCONFIG(TAG, "  stuck-stream recovery: reconnect after 30 s of rotation reports without a turn or press");
 }
 
 void FlicTwist::on_session_established_() {
@@ -160,6 +163,7 @@ void FlicTwist::on_session_established_() {
     if (this->desired_valid_(m))
       this->seed_tracker_from_desired_(m);
   }
+  this->stream_guard_.reset();
   this->send_init_button_events_();
 }
 
@@ -316,6 +320,8 @@ void FlicTwist::parse_button_events_(const uint8_t *data, size_t len) {
   if (len < 4)
     return;
   const size_t n = (len - 4) / 8;
+  if (n > 0)
+    this->stream_guard_.on_button_event();
   for (size_t k = 0; k < n; k++) {
     const uint8_t *s = data + 4 + k * 8;
     const uint8_t flags = s[6];
@@ -372,6 +378,9 @@ void FlicTwist::parse_twist_event_(const uint8_t *data, size_t len) {
   this->desired_.valid_mask |= (uint16_t) (1u << mode);
   this->desired_pref_.save(&this->desired_);
 
+  if (this->stream_guard_.on_rotation_report(millis(), total_delta))
+    this->recover_stuck_stream_();
+
   // First rotation packet of this mode since (re)connect: seed the baseline only, don't
   // replay the delta accumulated while disconnected as live increment/decrement events
   // (mirrors pyflic clearing _prev_int_pct on reset_state). The numbers were still updated.
@@ -399,6 +408,16 @@ void FlicTwist::parse_twist_event_(const uint8_t *data, size_t len) {
                       : (is_push ? EV_PUSH_TWIST_DECREMENT : EV_TWIST_DECREMENT);
   for (int i = 0; i < steps; i++)
     this->trigger_event_(ev);
+}
+
+void FlicTwist::recover_stuck_stream_() {
+  ESP_LOGW(TAG, "[%s] Rotation reports for 30 s without a turn or press: the Twist is stuck; reconnecting it",
+           this->parent()->address_str());
+  if (!this->request_reconnect())
+    return;  // tried again after the cooldown if it keeps streaming
+  this->stuck_reconnects_++;
+  if (this->stuck_reconnects_sensor_ != nullptr)
+    this->stuck_reconnects_sensor_->publish_state(this->stuck_reconnects_);
 }
 
 void FlicTwist::parse_battery_response_(const uint8_t *data, size_t len) {

@@ -10,10 +10,11 @@
 #
 # The Twist appears in Home Assistant as its own device, "<tw_name> Flic Twist", under the hub,
 # with: Position (the LED-ring position of the active mode), Events, Mode, Battery, Battery
-# voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the Pair, Dump creds and
-# Unpair buttons (the last two hidden by default). Pair it with the Pair button; the credentials
-# are kept in the hub's flash. push_twist_mode is selector (see the README for the modes). More
-# ring positions can be exposed as extra numbers with `twist_mode: <0-12>`.
+# voltage, RSSI, Stuck reconnects, Connected, Type, Status, Firmware, Name, MAC, and the Pair,
+# Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with the
+# Pair button; the credentials are kept in the hub's flash. push_twist_mode is selector (see the
+# README for the modes). More ring positions can be exposed as extra numbers with
+# `twist_mode: <0-12>`.
 
 substitutions:
   tw_mac: "00:00:00:00:00:00"
@@ -59,6 +60,9 @@ sensor:
     rssi:
       name: "RSSI"
       device_id: ${tw_id}_dev
+    stuck_reconnects:
+      name: "Stuck reconnects"
+      device_id: ${tw_id}_dev
 
 button:
   - platform: flic
@@ -81,6 +85,13 @@ button:
     type: unpair
     device_id: ${tw_id}_dev
     name: "Unpair"
+    disabled_by_default: true
+  # Drop the link and reconnect on a fresh session, without restarting the hub. Hidden by default.
+  - platform: flic
+    flic_id: ${tw_id}
+    type: reconnect
+    device_id: ${tw_id}_dev
+    name: "Reconnect"
     disabled_by_default: true
 
 binary_sensor:

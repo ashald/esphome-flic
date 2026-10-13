@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- **Stuck Twist recovery.** A Twist can get stuck reporting tiny back-and-forth turns several
+  times a second while nobody touches it, with its LED ring lit, until its session restarts. The
+  hub now spots this (30 s of reports with no turn and no press) and reconnects the Twist, at most
+  once every 5 minutes, counting each time in the new `stuck_reconnects` sensor ("Stuck
+  reconnects" in the Twist package).
+- **Reconnect button** (`type: reconnect`, in all three packages, hidden by default): the device
+  drops its link and the hub reconnects it on a fresh session, without restarting the hub.
+
 ### Documentation
 
 - **Board families** ([docs/boards.md](docs/boards.md)): how many devices a hub holds on the

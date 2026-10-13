@@ -119,6 +119,11 @@ class FlicClientBase : public ble_client::BLEClientNode,
   // True while the host still has a BLE link to the device (safe to poll while the loop is held).
   bool link_up();
 
+  // Ask the device to drop the link and keep advertising, as the OTA handoff does, so it comes
+  // back within seconds on a fresh session. Called by the "Reconnect" button and by the Twist's
+  // stuck-stream recovery. False if no session is up or the request couldn't be queued.
+  bool request_reconnect();
+
   // One-shot: log this device's pairing_id + pairing_key (hex) to the ESP log so they can be
   // copied into a new board's config (secrets.yaml) to migrate it WITHOUT re-pairing. Called by
   // the (diagnostic) "dump creds" button. Deliberately NOT a sensor — a bond secret must not
@@ -220,6 +225,9 @@ class FlicClientBase : public ble_client::BLEClientNode,
   void write_authenticated_(const uint8_t *opcode_payload, size_t len);  // append MAC, emit_frame_
   void write_raw_(const uint8_t *data, size_t len);                       // emit_frame_ (no MAC)
   void gattc_write_(const uint8_t *data, size_t len);                     // raw GATT write
+  // ForceBtDisconnectInd with restart_adv=1: the device drops the link itself and keeps
+  // advertising. False if the write couldn't be queued.
+  bool send_force_disconnect_();
 
   // ---- shared creds / session / entities ----
   bool load_creds_();
@@ -340,6 +348,13 @@ class FlicDumpCredsButton : public button::Button, public Parented<FlicClientBas
 class FlicUnpairButton : public button::Button, public Parented<FlicClientBase> {
  protected:
   void press_action() override { this->parent_->unpair(); }
+};
+
+// Diagnostic "reconnect" button: the device drops its link and the hub reconnects it on a fresh
+// session, without restarting the hub. Clears a Twist stuck streaming rotation reports.
+class FlicReconnectButton : public button::Button, public Parented<FlicClientBase> {
+ protected:
+  void press_action() override { this->parent_->request_reconnect(); }
 };
 
 // Writable 0-100 % position: a Twist's LED-ring position (bound to the active selector mode, or to

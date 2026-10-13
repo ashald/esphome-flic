@@ -126,10 +126,11 @@ device by hand.
 #
 # The Twist appears in Home Assistant as its own device, "<tw_name> Flic Twist", under the hub,
 # with: Position (the LED-ring position of the active mode), Events, Mode, Battery, Battery
-# voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the Pair, Dump creds and
-# Unpair buttons (the last two hidden by default). Pair it with the Pair button; the credentials
-# are kept in the hub's flash. push_twist_mode is selector (see the README for the modes). More
-# ring positions can be exposed as extra numbers with `twist_mode: <0-12>`.
+# voltage, RSSI, Stuck reconnects, Connected, Type, Status, Firmware, Name, MAC, and the Pair,
+# Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with the
+# Pair button; the credentials are kept in the hub's flash. push_twist_mode is selector (see the
+# README for the modes). More ring positions can be exposed as extra numbers with
+# `twist_mode: <0-12>`.
 
 substitutions:
   tw_mac: "00:00:00:00:00:00"
@@ -175,6 +176,9 @@ sensor:
     rssi:
       name: "RSSI"
       device_id: ${tw_id}_dev
+    stuck_reconnects:
+      name: "Stuck reconnects"
+      device_id: ${tw_id}_dev
 
 button:
   - platform: flic
@@ -197,6 +201,13 @@ button:
     type: unpair
     device_id: ${tw_id}_dev
     name: "Unpair"
+    disabled_by_default: true
+  # Drop the link and reconnect on a fresh session, without restarting the hub. Hidden by default.
+  - platform: flic
+    flic_id: ${tw_id}
+    type: reconnect
+    device_id: ${tw_id}_dev
+    name: "Reconnect"
     disabled_by_default: true
 
 binary_sensor:
@@ -241,8 +252,9 @@ text_sensor:
 #
 # The button appears in Home Assistant as its own device, "<fb_name> Flic Button", under the hub,
 # with: Events (click, double_click, hold), Battery, Battery voltage, RSSI, Connected, Type,
-# Status, Firmware, Name, MAC, and the Pair, Dump creds and Unpair buttons (the last two hidden by
-# default). Pair it with the Pair button; the credentials are kept in the hub's flash.
+# Status, Firmware, Name, MAC, and the Pair, Dump creds, Unpair and Reconnect buttons (the last
+# three hidden by default). Pair it with the Pair button; the credentials are kept in the hub's
+# flash.
 
 substitutions:
   fb_mac: "00:00:00:00:00:00"
@@ -298,6 +310,13 @@ button:
     device_id: ${fb_id}_dev
     name: "Unpair"
     disabled_by_default: true
+  # Drop the link and reconnect on a fresh session, without restarting the hub. Hidden by default.
+  - platform: flic
+    flic_id: ${fb_id}
+    type: reconnect
+    device_id: ${fb_id}_dev
+    name: "Reconnect"
+    disabled_by_default: true
 
 binary_sensor:
   - platform: flic
@@ -343,8 +362,8 @@ text_sensor:
 # Big button and Small button events (click, double_click, hold, four swipes, push-twist
 # rotation), Big dial and Small dial numbers (0-100 %, turned by holding the button and twisting
 # the Duo), Battery, Battery voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the
-# Pair, Dump creds and Unpair buttons (the last two hidden by default). Pair it with the Pair
-# button, then hold the Duo's big button for about 7 s until it flashes.
+# Pair, Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with
+# the Pair button, then hold the Duo's big button for about 7 s until it flashes.
 
 substitutions:
   fd_mac: "00:00:00:00:00:00"
@@ -417,6 +436,13 @@ button:
     type: unpair
     device_id: ${fd_id}_dev
     name: "Unpair"
+    disabled_by_default: true
+  # Drop the link and reconnect on a fresh session, without restarting the hub. Hidden by default.
+  - platform: flic
+    flic_id: ${fd_id}
+    type: reconnect
+    device_id: ${fd_id}_dev
+    name: "Reconnect"
     disabled_by_default: true
 
 binary_sensor:
@@ -508,11 +534,13 @@ pushing and twisting, and mode 12 for plain rotation. `push_twist_mode` picks th
 | `sensor` | `battery_voltage` | ✓ | ✓ | ✓ | |
 | `sensor` | `rssi` | ✓ | ✓ | ✓ | Read on the open link every 60 s. |
 | `sensor` | `mode` | ✓ | | | Active Twist mode, learned from the first event after boot. |
+| `sensor` | `stuck_reconnects` | ✓ | | | Times the hub reconnected the Twist because it was stuck (see Reliability notes), since boot. |
 | `binary_sensor` | `connected` | ✓ | ✓ | ✓ | On while the authenticated session is up. |
 | `text_sensor` | `type` | ✓ | ✓ | ✓ | `twist`, `flic2` or `duo`. |
 | `text_sensor` | `status` | ✓ | ✓ | ✓ | `not paired`, `disconnected` or `connected`. |
 | `text_sensor` | `firmware_version`, `device_name`, `mac` | ✓ | ✓ | ✓ | |
 | `button` | `type: pair` / `dump_creds` / `unpair` | ✓ | ✓ | ✓ | See Pairing. |
+| `button` | `type: reconnect` | ✓ | ✓ | ✓ | The device drops its link and the hub reconnects it on a fresh session, without restarting the hub. |
 
 Hub level, without `flic_id`: `sensor` keys `slots`, `paired` and `connected` count the
 slots on the node, those with credentials, and those with a session up. They are handy for a
@@ -666,6 +694,12 @@ automation editor's YAML mode.
 - **Scanning.** ESPHome shrinks its scan window to 30 ms while connections are up. 150 ms
   (`connection_scan_window`) catches re-advertising devices much more reliably. Passive
   scanning is better for hubs that only serve Flics.
+- **Stuck Twists.** A Twist can get stuck reporting tiny back-and-forth turns, about eight a
+  second, while nobody touches it, with its LED ring lit. The reports are smaller than one step,
+  so nothing reaches Home Assistant. Restarting its session ended it. The hub now does that by
+  itself: after 30 s of such reports with no turn and no press, it asks the Twist to drop the link
+  and reconnects it, at most once every 5 minutes. The `stuck_reconnects` sensor counts these;
+  the Reconnect button does the same by hand.
 
 ## Not implemented
 
@@ -689,6 +723,10 @@ Python 3 and a C++17 compiler.
   shorter than 47 bits.
 - **Duo behaviour** (`duo_input.h`): scripted presses, swipes and twists, covering the rules
   in Events above.
+- **Stuck Twist detection** (`twist_stream_guard.h`): a stuck stream recorded from a hub
+  (`twist_stuck_stream.txt`) gets one reconnect 30 s in and, if it never stops, the next only
+  after the cooldown. Turning, fiddling with presses, sparse reports, a reconnect mid-stream and
+  a `millis()` wrap behave as they should.
 
 ## Protocol and credits
 

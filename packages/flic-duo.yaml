@@ -12,8 +12,8 @@
 # Big button and Small button events (click, double_click, hold, four swipes, push-twist
 # rotation), Big dial and Small dial numbers (0-100 %, turned by holding the button and twisting
 # the Duo), Battery, Battery voltage, RSSI, Connected, Type, Status, Firmware, Name, MAC, and the
-# Pair, Dump creds and Unpair buttons (the last two hidden by default). Pair it with the Pair
-# button, then hold the Duo's big button for about 7 s until it flashes.
+# Pair, Dump creds, Unpair and Reconnect buttons (the last three hidden by default). Pair it with
+# the Pair button, then hold the Duo's big button for about 7 s until it flashes.
 
 substitutions:
   fd_mac: "00:00:00:00:00:00"
@@ -86,6 +86,13 @@ button:
     type: unpair
     device_id: ${fd_id}_dev
     name: "Unpair"
+    disabled_by_default: true
+  # Drop the link and reconnect on a fresh session, without restarting the hub. Hidden by default.
+  - platform: flic
+    flic_id: ${fd_id}
+    type: reconnect
+    device_id: ${fd_id}_dev
+    name: "Reconnect"
     disabled_by_default: true
 
 binary_sensor:

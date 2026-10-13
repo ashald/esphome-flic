@@ -10,6 +10,8 @@ Per device (need `flic_id`):
   rssi             connection RSSI read on the open link (no scanning),
   mode             (Twist only) the selector mode the knob is in, 0-11 = selector slots, 12 =
                    push-twist; learned from the first event after boot.
+  stuck_reconnects (Twist only) times the hub reconnected the Twist because it kept sending
+                   rotation reports while nobody turned it (see the README); counts from boot.
 
 Node level (no `flic_id`; one set per hub, from the FlicFleet summary):
   slots      Flic slots configured on this node,
@@ -27,6 +29,7 @@ from esphome.const import (
     DEVICE_CLASS_VOLTAGE,
     ENTITY_CATEGORY_DIAGNOSTIC,
     STATE_CLASS_MEASUREMENT,
+    STATE_CLASS_TOTAL_INCREASING,
     UNIT_DECIBEL_MILLIWATT,
     UNIT_PERCENT,
     UNIT_VOLT,
@@ -38,17 +41,20 @@ CONF_BATTERY_VOLTAGE = "battery_voltage"
 CONF_BATTERY_LEVEL = "battery_level"
 CONF_RSSI = "rssi"
 CONF_MODE = "mode"
+CONF_STUCK_RECONNECTS = "stuck_reconnects"
 CONF_SLOTS = "slots"
 CONF_PAIRED = "paired"
 CONF_CONNECTED = "connected"
 
-_PER_DEVICE = (CONF_BATTERY_VOLTAGE, CONF_BATTERY_LEVEL, CONF_RSSI, CONF_MODE)
+_PER_DEVICE = (CONF_BATTERY_VOLTAGE, CONF_BATTERY_LEVEL, CONF_RSSI, CONF_MODE, CONF_STUCK_RECONNECTS)
+_TWIST_ONLY = (CONF_MODE, CONF_STUCK_RECONNECTS)
 
 
 def _per_device_needs_id(config):
     if any(k in config for k in _PER_DEVICE) and CONF_FLIC_ID not in config:
         raise cv.Invalid(
-            "battery_voltage / battery_level / rssi / mode are per-device sensors and need flic_id"
+            "battery_voltage / battery_level / rssi / mode / stuck_reconnects are per-device sensors "
+            "and need flic_id"
         )
     return config
 
@@ -83,6 +89,12 @@ CONFIG_SCHEMA = cv.All(
                 accuracy_decimals=0,
                 icon="mdi:dial",
             ),
+            cv.Optional(CONF_STUCK_RECONNECTS): sensor.sensor_schema(
+                state_class=STATE_CLASS_TOTAL_INCREASING,
+                accuracy_decimals=0,
+                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
+                icon="mdi:restart-alert",
+            ),
             # Node level (FlicFleet).
             cv.Optional(CONF_SLOTS): sensor.sensor_schema(
                 accuracy_decimals=0,
@@ -106,8 +118,9 @@ CONFIG_SCHEMA = cv.All(
 
 
 def _final_validate(config):
-    if CONF_MODE in config and device_type_of(config[CONF_FLIC_ID]) != DEVICE_TWIST:
-        raise cv.Invalid("mode is a Twist sensor (the selector mode the knob is in)")
+    for key in _TWIST_ONLY:
+        if key in config and device_type_of(config[CONF_FLIC_ID]) != DEVICE_TWIST:
+            raise cv.Invalid(f"{key} is a Twist sensor")
     return config
 
 
@@ -125,6 +138,8 @@ async def to_code(config):
             cg.add(hub.set_rssi_sensor(await sensor.new_sensor(config[CONF_RSSI])))
         if CONF_MODE in config:
             cg.add(hub.set_mode_sensor(await sensor.new_sensor(config[CONF_MODE])))
+        if CONF_STUCK_RECONNECTS in config:
+            cg.add(hub.set_stuck_reconnects_sensor(await sensor.new_sensor(config[CONF_STUCK_RECONNECTS])))
     for key, setter in (
         (CONF_SLOTS, "set_slots_sensor"),
         (CONF_PAIRED, "set_paired_sensor"),

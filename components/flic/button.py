@@ -8,6 +8,8 @@
 - dump_creds: one-shot — logs this device's pairing_id + pairing_key to the ESP log so they can
   be copied into a replacement board's config (secrets.yaml) to migrate WITHOUT re-pairing.
   Diagnostic; keep it disabled_by_default — it prints a bond secret to the log on demand.
+- reconnect: the device drops its link and keeps advertising, and the hub reconnects it on a
+  fresh session, without restarting the hub. Diagnostic.
 """
 
 import esphome.codegen as cg
@@ -26,6 +28,9 @@ FlicDumpCredsButton = flic_ns.class_(
 FlicUnpairButton = flic_ns.class_(
     "FlicUnpairButton", button.Button, cg.Parented.template(FlicClientBase)
 )
+FlicReconnectButton = flic_ns.class_(
+    "FlicReconnectButton", button.Button, cg.Parented.template(FlicClientBase)
+)
 
 CONF_TYPE = "type"
 
@@ -39,6 +44,9 @@ CONFIG_SCHEMA = cv.typed_schema(
         ).extend(_FLIC),
         "unpair": button.button_schema(
             FlicUnpairButton, entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+        ).extend(_FLIC),
+        "reconnect": button.button_schema(
+            FlicReconnectButton, entity_category=ENTITY_CATEGORY_DIAGNOSTIC, icon="mdi:restart"
         ).extend(_FLIC),
     },
     key=CONF_TYPE,

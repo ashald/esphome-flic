@@ -840,10 +840,7 @@ uint32_t FlicClientBase::send_ota_handoff() {
   esp_gap_conn_params_t p;
   if (this->session_ != FlicSession::ESTABLISHED || this->write_handle_ == 0 || !this->get_link_params_(&p))
     return 0;
-  const uint8_t ind[2] = {OP_FORCE_BT_DISCONNECT_IND, 0x01};  // restart_adv = 1
-  this->last_write_err_ = ESP_OK;
-  this->write_authenticated_(ind, sizeof(ind));
-  if (this->last_write_err_ != ESP_OK)
+  if (!this->send_force_disconnect_())
     return 0;  // not queued (e.g. congested): the tracker's clean disconnect applies, as before
   ESP_LOGD(TAG, "OTA handoff: ForceBtDisconnectInd (restart_adv=1) sent to the %s", this->device_kind_());
   // With slave latency the device only listens every (latency + 1) connection events, so the
@@ -851,6 +848,27 @@ uint32_t FlicClientBase::send_ota_handoff() {
   // it to act, from the negotiated params. The hold ends early once the link is gone, so this only
   // costs time when the device ignores the message.
   return (2 * ((uint32_t) p.latency + 1) + 1) * p.interval * 5 / 4 + 250;  // interval in 1.25 ms units
+}
+
+bool FlicClientBase::request_reconnect() {
+  const char *addr = this->parent()->address_str();
+  if (this->session_ != FlicSession::ESTABLISHED || this->write_handle_ == 0 || !this->link_up()) {
+    ESP_LOGW(TAG, "[%s] Reconnect: no session up", addr);
+    return false;
+  }
+  if (!this->send_force_disconnect_()) {
+    ESP_LOGW(TAG, "[%s] Reconnect: couldn't queue the disconnect request", addr);
+    return false;
+  }
+  ESP_LOGI(TAG, "[%s] Reconnect: asked the %s to drop its link and keep advertising", addr, this->device_kind_());
+  return true;
+}
+
+bool FlicClientBase::send_force_disconnect_() {
+  const uint8_t ind[2] = {OP_FORCE_BT_DISCONNECT_IND, 0x01};  // restart_adv = 1
+  this->last_write_err_ = ESP_OK;
+  this->write_authenticated_(ind, sizeof(ind));
+  return this->last_write_err_ == ESP_OK;
 }
 
 bool FlicClientBase::link_up() {

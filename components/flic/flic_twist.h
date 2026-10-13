@@ -28,6 +28,7 @@
 
 #include "chaskey.h"
 #include "rotate_tracker.h"
+#include "twist_stream_guard.h"
 
 namespace esphome {
 namespace flic {
@@ -47,6 +48,7 @@ class FlicTwist : public FlicClientBase {
 
   void set_push_twist_mode(PushTwistMode m) { this->push_twist_mode_ = m; }
   void set_mode_sensor(sensor::Sensor *s) { this->mode_sensor_ = s; }
+  void set_stuck_reconnects_sensor(sensor::Sensor *s) { this->stuck_reconnects_sensor_ = s; }
 
   // Set the LED-ring position (0-100%) of `mode` (0-12, or TWIST_MODE_ACTIVE for the current mode).
   // Remembered as the desired position (NVS) even without a session and applied on the next session
@@ -120,6 +122,13 @@ class FlicTwist : public FlicClientBase {
   ESPPreferenceObject desired_pref_;
 
   sensor::Sensor *mode_sensor_{nullptr};
+
+  // Stuck-stream recovery: reports for 30 s, each within 2 s of the last, staying within 1 % of the
+  // range with no press -> reconnect the Twist; at most once every 5 min.
+  void recover_stuck_stream_();
+  TwistStreamGuard stream_guard_{{2000, 30000, 60, D360 / 100, 300000}};
+  uint32_t stuck_reconnects_{0};
+  sensor::Sensor *stuck_reconnects_sensor_{nullptr};
 };
 
 }  // namespace flic
