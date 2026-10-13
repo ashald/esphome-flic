@@ -17,7 +17,6 @@
 #include <esp_attr.h>
 #include <esp_random.h>
 
-#include <algorithm>
 #include <vector>
 
 // TweetNaCl references randombytes() (from keypair/sign, which we don't call — but the linker
@@ -45,25 +44,27 @@ static const uint8_t OP_FORCE_BT_DISCONNECT_IND = 0x06;
 static const uint8_t MAC_LEN = 5;
 
 #ifdef USE_OTA_STATE_LISTENER
-// Outcome of the last OTA handoff, kept in RTC memory across the OTA's software reboot: log lines
-// emitted during an OTA never reach a log client (the main loop is blocked, then the chip resets),
-// so the next boot reports it instead (FlicClientBase::dump_config).
+// Outcome of the last OTA, kept in RTC memory across the OTA's software reboot: log lines emitted
+// during an OTA never reach a log client (the main loop is blocked, then the chip resets), so the
+// next boot reports it instead (FlicClientBase::dump_config).
 struct HandoffRecord {
   uint32_t magic;
-  uint8_t sent;         // devices asked to disconnect + keep advertising
-  uint8_t dropped;      // of those, links already gone when the hold ended
-  uint16_t elapsed_ms;  // how long the hold lasted
+  uint8_t kept;  // Flic links kept up when the upload started
+  uint8_t up;    // of those, still up when it completed (the reboot then ends them)
+  uint16_t reserved;
 };
-static const uint32_t HANDOFF_MAGIC = 0x46485230;  // "FHR0"
+static const uint32_t HANDOFF_MAGIC = 0x46485231;  // "FHR1"
 RTC_NOINIT_ATTR static HandoffRecord rtc_last_handoff;
 
-// Hub-wide OTA handoff. When an OTA starts, esp32_ble_tracker gracefully disconnects every BLE
-// client, and a Flic its host cleanly disconnects goes SILENT (stops advertising) until it is
-// physically pressed/twisted — so every flash cost a walk-around, while an abrupt drop (power loss,
-// Node Restart) recovers on its own. Instead, ask each device to drop the link itself and keep
-// advertising, then hold the main loop (already blocked by the OTA transfer) until the links are
-// gone or the delivery budget runs out. One shared listener so all slots are asked first and
-// waited on ONCE.
+// Hub-wide OTA handling. When an OTA starts, esp32_ble_tracker cleanly disconnects every BLE client,
+// and a Flic its host cleanly disconnects goes silent until it is pressed or twisted. Asking each
+// device to drop the link itself and keep advertising was not enough either: some stopped
+// advertising during the ~15-20 s the upload and the reboot take. An abrupt drop, as after a power
+// loss or a Node Restart, is what a Flic treats as a lost link: it keeps advertising until the hub
+// is back. So the links are kept up through the upload and the reboot ends them. Each Flic client
+// is marked DISCONNECTING, which turns the tracker's disconnect into a no-op (this listener is
+// registered at construction, so it runs before the tracker's); if the OTA fails, the clients are
+// handed back as they were.
 class FlicOtaHandoff : public ota::OTAGlobalStateListener {
  public:
   static FlicOtaHandoff *get() {
@@ -84,65 +85,38 @@ class FlicOtaHandoff : public ota::OTAGlobalStateListener {
   void dump_boot_record(const FlicClientBase *client) const {
     if (this->clients_.empty() || this->clients_.front() != client || this->boot_record_.magic != HANDOFF_MAGIC)
       return;
-    ESP_LOGCONFIG(TAG, "Last OTA handoff: %u of %u Flic(s) dropped their link within %u ms%s",
-                  this->boot_record_.dropped, this->boot_record_.sent, this->boot_record_.elapsed_ms,
-                  this->boot_record_.dropped < this->boot_record_.sent ? " (rest were disconnected by the tracker)"
-                                                                       : "");
+    ESP_LOGCONFIG(TAG, "Last OTA: kept %u Flic link(s) up through the upload, %u still up at the reboot",
+                  this->boot_record_.kept, this->boot_record_.up);
   }
 
   void on_ota_global_state(ota::OTAState state, float progress, uint8_t error,
                            ota::OTAComponent *comp) override {
-    if (state == ota::OTA_ERROR || state == ota::OTA_ABORT) {
-      rtc_last_handoff.magic = 0;  // no reboot follows; don't report this handoff on a later boot
-      return;
-    }
-    if (state != ota::OTA_STARTED)
-      return;
-    rtc_last_handoff.magic = 0;  // only this OTA's handoff (if any) may survive into its reboot
-    static const uint32_t MAX_HOLD_MS = 6000;  // espota waits far longer for the prepare ack
-    std::vector<FlicClientBase *> linked;
-    uint32_t hold_ms = 0;
-    for (auto *client : this->clients_) {
-      const uint32_t ms = client->send_ota_handoff();
-      if (ms != 0) {
-        linked.push_back(client);
-        hold_ms = std::max(hold_ms, ms);
+    if (state == ota::OTA_STARTED) {
+      rtc_last_handoff.magic = 0;  // only this OTA's record may survive into its reboot
+      this->kept_.clear();
+      for (auto *client : this->clients_) {
+        if (client->keep_link_through_ota())
+          this->kept_.push_back(client);
       }
+      ESP_LOGI(TAG, "OTA starting: keeping %u Flic link(s) up until the reboot", (unsigned) this->kept_.size());
+    } else if (state == ota::OTA_COMPLETED) {
+      uint8_t up = 0;
+      for (auto *client : this->kept_) {
+        if (client->link_up())
+          up++;
+      }
+      rtc_last_handoff = {HANDOFF_MAGIC, (uint8_t) this->kept_.size(), up, 0};
+    } else if (state == ota::OTA_ERROR || state == ota::OTA_ABORT) {
+      rtc_last_handoff.magic = 0;  // no reboot follows; don't report this OTA on a later boot
+      for (auto *client : this->kept_)
+        client->resume_after_ota();
+      this->kept_.clear();
     }
-    const size_t sent = linked.size();
-    if (sent == 0)
-      return;
-    // Stop scanning for the hold: nothing drains the BLE event queue while the main loop is held,
-    // so adverts would overflow it — and a dropped STOP_COMPLETE leaves the tracker stuck in
-    // STOPPING if the OTA then fails. Keep scan_continuous_ set so the tracker's own OTA listener
-    // (runs after us; its stop_scan() is then a no-op) still restarts scanning on OTA_ERROR/ABORT.
-    // Also frees airtime for the handoff writes.
-    auto *tracker = espbt::global_esp32_ble_tracker;
-    if (tracker != nullptr && tracker->get_scanner_state() == espbt::ScannerState::RUNNING) {
-      tracker->stop_scan();
-      tracker->set_scan_continuous(true);
-    }
-    hold_ms = std::min(hold_ms, MAX_HOLD_MS);
-    ESP_LOGI(TAG, "OTA starting: asked %u Flic(s) to disconnect + keep advertising; holding up to %u ms",
-             (unsigned) sent, (unsigned) hold_ms);
-    // Done once every device has dropped its link (it obeyed); whatever is still linked when the
-    // budget runs out gets the tracker's clean disconnect, as before.
-    const uint32_t start = millis();
-    while (!linked.empty() && millis() - start < hold_ms) {
-      App.feed_wdt();
-      delay(10);  // yields to the BT host/controller tasks that put the writes on air
-      linked.erase(std::remove_if(linked.begin(), linked.end(), [](FlicClientBase *c) { return !c->link_up(); }),
-                   linked.end());
-    }
-    const uint32_t elapsed = millis() - start;
-    rtc_last_handoff = {HANDOFF_MAGIC, (uint8_t) sent, (uint8_t) (sent - linked.size()),
-                        (uint16_t) std::min<uint32_t>(elapsed, 0xFFFF)};
-    ESP_LOGI(TAG, "OTA handoff: %u of %u Flic link(s) dropped after %u ms", (unsigned) (sent - linked.size()),
-             (unsigned) sent, (unsigned) elapsed);
   }
 
  protected:
   std::vector<FlicClientBase *> clients_;
+  std::vector<FlicClientBase *> kept_;
   HandoffRecord boot_record_{};
 };
 #endif
@@ -834,20 +808,21 @@ void FlicClientBase::request_pairing() {
     this->parent()->disconnect();
 }
 
-uint32_t FlicClientBase::send_ota_handoff() {
-  // session_/write_handle_ lag a drop whose DISCONNECT event is still queued; the host link
-  // lookup doesn't. Skip dead links so the boot record only counts devices actually asked.
-  esp_gap_conn_params_t p;
-  if (this->session_ != FlicSession::ESTABLISHED || this->write_handle_ == 0 || !this->get_link_params_(&p))
-    return 0;
-  if (!this->send_force_disconnect_())
-    return 0;  // not queued (e.g. congested): the tracker's clean disconnect applies, as before
-  ESP_LOGD(TAG, "OTA handoff: ForceBtDisconnectInd (restart_adv=1) sent to the %s", this->device_kind_());
-  // With slave latency the device only listens every (latency + 1) connection events, so the
-  // write can take that long to reach it; budget that twice (one missed listen) plus an event for
-  // it to act, from the negotiated params. The hold ends early once the link is gone, so this only
-  // costs time when the device ignores the message.
-  return (2 * ((uint32_t) p.latency + 1) + 1) * p.interval * 5 / 4 + 250;  // interval in 1.25 ms units
+bool FlicClientBase::keep_link_through_ota() {
+  auto *client = this->parent();
+  const espbt::ClientState st = client->state();
+  if ((st != espbt::ClientState::CONNECTED && st != espbt::ClientState::ESTABLISHED) || !this->link_up())
+    return false;
+  this->state_before_ota_ = st;
+  client->set_state(espbt::ClientState::DISCONNECTING);  // the tracker's OTA disconnect then skips it
+  return true;
+}
+
+void FlicClientBase::resume_after_ota() {
+  // A link that dropped during the upload has its CLOSE event queued; ble_client finishes that from
+  // DISCONNECTING as usual.
+  if (this->link_up())
+    this->parent()->set_state(this->state_before_ota_);
 }
 
 bool FlicClientBase::request_reconnect() {

@@ -683,10 +683,14 @@ automation editor's YAML mode.
 
 ## Reliability notes
 
-- **OTA updates.** Before an OTA reboot the hub asks every connected device to drop the link
-  and keep advertising, so all of them reconnect on their own within seconds of the new
-  firmware starting. Without that, a device treats the hub's clean disconnect as "the host
-  left" and stays silent until pressed.
+- **OTA updates.** The hub keeps every Flic connected through the upload, and the reboot into
+  the new firmware drops the links abruptly. A device treats that as a lost link: it keeps
+  advertising, and the hub reconnects it once the new firmware is up. On our ESP32 and ESP32-S3
+  hubs every connected device came back, most within seconds and all within half a minute. Two
+  things that didn't work: ESPHome's own clean disconnect at the start of an OTA, after which a
+  device treats it as "the host left" and stays silent until pressed; and asking the devices to
+  drop the link at the start, after which some stopped advertising before the hub was back. The
+  boot log reports how many links the last OTA kept.
 - **Reconnect advertising** (Flic 2, Duo): see `reconnect_advertising_interval` above. The
   Twist protocol has no equivalent setting.
 - **Session duties.** The component answers the device's ping requests, re-verifies when a

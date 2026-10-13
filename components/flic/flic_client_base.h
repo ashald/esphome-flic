@@ -112,16 +112,18 @@ class FlicClientBase : public ble_client::BLEClientNode,
   // pairing mode first (hold its button ~7s until the LED ring does the pairing flash).
   void request_pairing();
 
-  // OTA handoff: if a session is up, ask the device to drop the link itself and keep advertising
-  // (ForceBtDisconnectInd, restart_adv=1). Returns how long (ms) to hold before the link may be
-  // torn down for the message to reach the device, or 0 if nothing was sent.
-  uint32_t send_ota_handoff();
+  // OTA: keep this slot's link up through the upload, so the reboot ends it abruptly and the device
+  // keeps advertising (see FlicOtaHandoff). Marks the BLE client DISCONNECTING, which makes
+  // esp32_ble_tracker's OTA disconnect skip it. False if there was no link to keep.
+  bool keep_link_through_ota();
+  // The OTA failed and no reboot follows: hand a kept link back to ble_client as it was.
+  void resume_after_ota();
   // True while the host still has a BLE link to the device (safe to poll while the loop is held).
   bool link_up();
 
-  // Ask the device to drop the link and keep advertising, as the OTA handoff does, so it comes
-  // back within seconds on a fresh session. Called by the "Reconnect" button and by the Twist's
-  // stuck-stream recovery. False if no session is up or the request couldn't be queued.
+  // Ask the device to drop the link and keep advertising (ForceBtDisconnectInd, restart_adv=1), so
+  // it comes back within seconds on a fresh session. Called by the "Reconnect" button and by the
+  // Twist's stuck-stream recovery. False if no session is up or the request couldn't be queued.
   bool request_reconnect();
 
   // One-shot: log this device's pairing_id + pairing_key (hex) to the ESP log so they can be
@@ -266,6 +268,7 @@ class FlicClientBase : public ble_client::BLEClientNode,
   uint16_t write_handle_{0};
   uint16_t gap_name_handle_{0};  // GAP Device Name (0x2A00) characteristic handle, if present
   esp_err_t last_write_err_{ESP_OK};  // sticky: set by a failed gattc_write_, reset by the caller
+  espbt::ClientState state_before_ota_{espbt::ClientState::ESTABLISHED};  // see keep_link_through_ota()
 
   // session state
   FlicSession session_{FlicSession::IDLE};

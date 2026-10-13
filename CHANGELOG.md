@@ -12,6 +12,14 @@
 - **Reconnect button** (`type: reconnect`, in all three packages, hidden by default): the device
   drops its link and the hub reconnects it on a fresh session, without restarting the hub.
 
+### Changed
+
+- **OTA updates keep the Flic links up until the reboot.** The hub used to ask every device to
+  drop its link when an OTA started; some stopped advertising before the new firmware was up and
+  stayed offline until pressed. Now the links stay up through the upload and the reboot drops
+  them abruptly, so the devices keep advertising until the hub reconnects them. The boot log
+  reports how many links the last OTA kept.
+
 ### Documentation
 
 - **Board families** ([docs/boards.md](docs/boards.md)): how many devices a hub holds on the
