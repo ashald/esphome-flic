@@ -77,7 +77,7 @@ class FlicTwist : public FlicClientBase {
   void on_session_established_() override;  // seed ring positions + send init-button-events
   void request_battery_() override;
   void request_firmware_version_() override;
-  float battery_level_from_voltage_(float volts) const override;  // 2xAAA alkaline, rough
+  float battery_level_from_voltage_(float volts) const override;  // 2.419 V ceiling = full
   void on_setup_() override;
   void on_reset_session_() override;
 

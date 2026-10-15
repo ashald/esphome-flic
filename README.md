@@ -549,7 +549,7 @@ pushing and twisting, and mode 12 for plain rotation. `push_twist_mode` picks th
 | --- | --- | --- | --- | --- | --- |
 | `event` | (entity) | ✓ | ✓ | ✓ ×2 | Duo: one per button, `duo_button: big` / `small` required. |
 | `number` | (entity) | ✓ | | ✓ ×2 | Twist: ring position, optional `twist_mode: 0-12` to bind a fixed mode. Duo: dial, `duo_button` required. |
-| `sensor` | `battery_level` | ✓ | ✓ | ✓ | Percent from the cell voltage. Twist: 2×AAA. Flic 2 and Duo: CR2032. Read hourly. |
+| `sensor` | `battery_level` | ✓ | ✓ | ✓ | Percent from the cell voltage, read hourly. Flic 2 and Duo: CR2032. Twist (2×AAA): a Twist never reports more than 2.419 V, so healthy batteries all read 100 % and the level only drops as they age (0 % at 2.0 V is an estimate). |
 | `sensor` | `battery_voltage` | ✓ | ✓ | ✓ | |
 | `sensor` | `rssi` | ✓ | ✓ | ✓ | Read on the open link every 60 s. |
 | `sensor` | `disconnects` | ✓ | ✓ | ✓ | Open links that dropped, since boot. |

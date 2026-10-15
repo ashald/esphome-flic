@@ -42,6 +42,9 @@ static const uint8_t MAC_LEN = 5;
 static const uint32_t DESIRED_MAGIC = 0x54445031;  // "TDP1"
 
 // HA event-type strings (must match pyflic-ble EVENT_TYPE_* and event.py's registered set).
+// The highest battery voltage a Twist reports (healthy cells all read this; see battery_level_from_voltage_).
+static constexpr float TWIST_BATTERY_FULL_V = 2.419f;
+
 static const char *const EV_CLICK = "click";
 static const char *const EV_DOUBLE_CLICK = "double_click";
 static const char *const EV_HOLD = "hold";
@@ -235,9 +238,11 @@ void FlicTwist::request_firmware_version_() {
 }
 
 float FlicTwist::battery_level_from_voltage_(float volts) const {
-  // Rough 2xAAA alkaline curve: ~3.0 V full, ~2.0 V empty. The Twist reports its voltage under
-  // BLE-transmit load (~2.4 V even on fresh cells), so treat this as a trend, not a gauge.
-  return clamp_pct((volts - 2.0f) / (3.0f - 2.0f) * 100.0f);
+  // The Twist does not report its cells' voltage below a ceiling of 2.419 V: on our hubs every Twist
+  // with healthy batteries, freshly replaced ones included, read exactly 2.419 V for weeks, and only
+  // ageing batteries read lower (2.22 V, then 2.18 V). So the ceiling is "full"; below it the level
+  // falls linearly to an assumed empty at 2.0 V (an estimate: we have not seen a Twist run flat).
+  return clamp_pct((volts - 2.0f) / (TWIST_BATTERY_FULL_V - 2.0f) * 100.0f);
 }
 
 void FlicTwist::on_ble_notify_(const uint8_t *data, uint16_t len) {

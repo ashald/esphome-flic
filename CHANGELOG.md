@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+
+- **Twist battery level.** A Twist never reports more than 2.419 V, however fresh its batteries, so
+  the old 3.0 V-full scale showed every healthy Twist at about 42 %. 2.419 V now reads 100 %; the level
+  falls as aging batteries report less (0 % at 2.0 V is an estimate).
+
 ### Added
 
 - **Stuck Twist recovery.** A Twist can get stuck reporting tiny back-and-forth turns several
