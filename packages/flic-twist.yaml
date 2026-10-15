@@ -15,6 +15,8 @@
 # default). Pair it with the Pair button; the credentials are kept in the hub's flash.
 # push_twist_mode is selector (see the README for the modes). More ring positions can be exposed
 # as extra numbers with `twist_mode: <0-12>`.
+# The Position number and Events entity get the ids `<tw_id>_position` and `<tw_id>_events`, so your
+# own YAML can read the position or add `on_event` automations (`- id: !extend <tw_id>_events`).
 
 substitutions:
   tw_mac: "00:00:00:00:00:00"
@@ -35,12 +37,14 @@ flic:
 
 number:
   - platform: flic
+    id: ${tw_id}_position
     flic_id: ${tw_id}
     device_id: ${tw_id}_dev
     name: "Position"
 
 event:
   - platform: flic
+    id: ${tw_id}_events
     flic_id: ${tw_id}
     device_id: ${tw_id}_dev
     name: "Events"
