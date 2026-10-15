@@ -33,6 +33,7 @@ flic:
 
 event:
   - platform: flic
+    id: ${fb_id}_events
     flic_id: ${fb_id}
     device_id: ${fb_id}_dev
     name: "Events"
