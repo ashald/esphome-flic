@@ -45,6 +45,8 @@ static const uint32_t DESIRED_MAGIC = 0x54445031;  // "TDP1"
 static const char *const EV_CLICK = "click";
 static const char *const EV_DOUBLE_CLICK = "double_click";
 static const char *const EV_HOLD = "hold";
+static const char *const EV_PRESS = "press";
+static const char *const EV_RELEASE = "release";
 static const char *const EV_TWIST_INCREMENT = "twist_increment";
 static const char *const EV_TWIST_DECREMENT = "twist_decrement";
 static const char *const EV_PUSH_TWIST_INCREMENT = "push_twist_increment";
@@ -311,8 +313,10 @@ const char *FlicTwist::map_button_event_(uint8_t event_encoded) const {
       return EV_CLICK;
     case 3:
       return EV_HOLD;
+    case 1:
+      return EV_PRESS;  // the instant the button goes down, before any click/hold is known
     default:
-      return nullptr;  // up/down are not surfaced as HA events
+      return EV_RELEASE;  // up (an up that concludes a double click is double_click above)
   }
 }
 

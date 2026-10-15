@@ -32,6 +32,8 @@ _PRESSES = ["click", "double_click", "hold"]
 EVENT_TYPES = {
     DEVICE_TWIST: _PRESSES
     + [
+        "press",
+        "release",
         "twist_increment",
         "twist_decrement",
         "push_twist_increment",

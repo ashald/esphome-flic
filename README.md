@@ -572,6 +572,7 @@ slots on the node, those with credentials, and those with a session up. They are
 | Event type | Twist | Flic 2 | Duo button |
 | --- | --- | --- | --- |
 | `click`, `double_click`, `hold` | ✓ | ✓ | ✓ |
+| `press`, `release` | ✓ | | |
 | `rotate_clockwise`, `rotate_counter_clockwise` | selector mode | | push-twist |
 | `selector_changed` | selector mode | | |
 | `twist_increment`, `twist_decrement`, `push_twist_increment`, `push_twist_decrement` | default and continuous modes | | |
@@ -579,6 +580,10 @@ slots on the node, those with credentials, and those with a session up. They are
 
 - `click` fires once it is certain no second click follows, so a double click produces only
   `double_click`. `hold` fires about 1 s into a press.
+- `press` fires the moment the Twist's button goes down and `release` when it comes up, before
+  `click` is known: use them to react without waiting for the double-click window. The release that
+  ends a double click fires `double_click` instead. A press also fires its `click`, `double_click`
+  or `hold` as usual.
 - Events a device queued while it was disconnected are not replayed as live events, so a
   reconnect never triggers old presses. Flic 2 and Duo still acknowledge them, which clears
   the device's queue.
