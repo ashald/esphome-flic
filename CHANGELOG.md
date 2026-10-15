@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-10-16
 
 ### Fixed
 
@@ -10,6 +10,13 @@
 
 ### Added
 
+- **Twist `press` and `release` events.** The Twist reports its button going down and coming up as
+  they happen, before `click`, `double_click` or `hold` is known, so a config can react without
+  waiting for the double-click window. The release that ends a double click is `double_click`.
+- **Stable entity ids in the packages.** The Twist package gives its Position number and Events entity
+  the ids `<tw_id>_position` and `<tw_id>_events`, and the Flic 2 package its Events entity
+  `<fb_id>_events`, so your own YAML can read them or add `on_event` automations
+  (`- id: !extend <tw_id>_events`).
 - **Stuck Twist recovery.** A Twist can get stuck reporting tiny back-and-forth turns several
   times a second while nobody touches it, with its LED ring lit, until its session restarts. The
   hub now spots this (30 s of reports with no turn and no press) and reconnects the Twist, at most
